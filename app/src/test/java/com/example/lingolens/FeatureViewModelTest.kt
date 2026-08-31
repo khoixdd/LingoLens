@@ -87,25 +87,31 @@ class FeatureViewModelTest {
     }
 
     @Test
-    fun reviewRevealAndRatingAdvanceTheCard() {
-        val viewModel = ReviewViewModel()
+    fun reviewRevealAndRatingAdvanceTheCard() = runTest(testDispatcher) {
+        val repository = FakeVocabularyRepository()
+        val viewModel = ReviewViewModel(repository)
+
         viewModel.onAction(ReviewAction.Reveal)
         assertTrue(viewModel.uiState.value.isRevealed)
+
         viewModel.onAction(ReviewAction.Rate(ReviewRating.Good))
-        assertEquals(1, viewModel.uiState.value.currentIndex)
-        assertFalse(viewModel.uiState.value.isRevealed)
+        assertTrue(viewModel.uiState.value.isCompleted)
     }
 
     @Test
-    fun quizShowsCorrectFeedbackBeforeMovingNext() {
-        val viewModel = QuizViewModel()
-        viewModel.onAction(QuizAction.SelectAnswer(2))
+    fun quizShowsCorrectFeedbackBeforeMovingNext() = runTest(testDispatcher) {
+        val repository = FakeVocabularyRepository()
+        val viewModel = QuizViewModel(repository)
+
+        val correctIdx = viewModel.uiState.value.correctIndex
+        viewModel.onAction(QuizAction.SelectAnswer(correctIdx))
         assertEquals(QuizAnswerState.Selected, viewModel.uiState.value.answerState)
+
         viewModel.onAction(QuizAction.CheckAnswer)
         assertEquals(QuizAnswerState.Correct, viewModel.uiState.value.answerState)
-        viewModel.onAction(QuizAction.Next)
-        assertEquals(3, viewModel.uiState.value.questionIndex)
-        assertEquals(QuizAnswerState.Unanswered, viewModel.uiState.value.answerState)
+
+        val completion = viewModel.onAction(QuizAction.Next)
+        assertEquals(1, completion?.score)
     }
 
     @Test
