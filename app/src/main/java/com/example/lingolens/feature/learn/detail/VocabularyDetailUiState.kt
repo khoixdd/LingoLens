@@ -1,15 +1,19 @@
 package com.example.lingolens.feature.learn.detail
 
-import com.example.lingolens.feature.learn.notebook.MasteryLevel
+import com.example.lingolens.domain.model.MasteryLevel
+import com.example.lingolens.domain.model.Vocabulary
 
 data class VocabularyDetailUiState(
-    val id: String = "ubiquitous",
-    val word: String = "ubiquitous",
-    val pronunciation: String = "/juːˈbɪkwɪtəs/",
-    val partOfSpeech: String = "adjective",
-    val meaning: String = "phổ biến, có mặt ở khắp mọi nơi",
-    val example: String = "Smartphones have become ubiquitous in modern life.",
-    val tags: List<String> = listOf("Technology", "Common"),
-    val mastery: MasteryLevel = MasteryLevel.Learning,
-    val isFavorite: Boolean = true,
+    val id: String = "",
+    val word: String = "",
+    val pronunciation: String = "",
+    val partOfSpeech: String = "",
+    val meaning: String = "",
+    val example: String = "",
+    val tags: List<String> = emptyList(),
+    val mastery: MasteryLevel = MasteryLevel.New,
+    val isFavorite: Boolean = false,
+    val isLoading: Boolean = true,
+    val showEditDialog: Boolean = false,
+    val isDeleted: Boolean = false,
 )
