@@ -1,5 +1,6 @@
 package com.example.lingolens.feature.auth
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -7,21 +8,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DocumentScanner
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.lingolens.ui.components.LingoLensCard
+import com.example.lingolens.ui.components.LingoLensPrimaryButton
 import com.example.lingolens.ui.theme.LingoLensTheme
 
 @Composable
@@ -34,42 +36,56 @@ fun WelcomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(
-            Icons.Outlined.DocumentScanner,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-        )
+        Surface(
+            modifier = Modifier.size(156.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Surface(
+                    modifier = Modifier.size(82.dp),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 4.dp,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Outlined.DocumentScanner,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(42.dp),
+                        )
+                    }
+                }
+            }
+        }
         Text(
             "LingoLens",
             style = MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(top = 16.dp),
+            modifier = Modifier.padding(top = 24.dp),
         )
         Text(
-            "Turn the words around you into learning moments.",
+            "Scan. Translate. Learn.",
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+        Text(
+            "Turn the words around you into lasting vocabulary.",
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
+            modifier = Modifier.padding(top = 10.dp),
         )
-        LingoLensCard {
-            Text("Temporary welcome screen", fontWeight = FontWeight.SemiBold)
-            Text(
-                "Authentication is not connected yet. Continue to explore the first-pass app flow.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp),
-            )
-        }
-        Spacer(Modifier.height(24.dp))
-        Button(onClick = onContinue, modifier = Modifier.fillMaxWidth()) {
-            Text("Continue to LingoLens")
-        }
+        Spacer(Modifier.height(40.dp))
+        LingoLensPrimaryButton(text = "Get started", onClick = onContinue)
         OutlinedButton(
             onClick = {},
             enabled = false,
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         ) {
-            Text("Sign in — coming soon")
+            Text("Sign in - coming soon")
         }
     }
 }

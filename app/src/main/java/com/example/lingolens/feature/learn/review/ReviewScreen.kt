@@ -4,15 +4,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.VolumeUp
+import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -21,13 +24,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -90,11 +93,13 @@ fun ReviewScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    Text(
-                        "🎉 Excellent!",
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold,
+                    Icon(
+                        Icons.Outlined.EmojiEvents,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.tertiary,
                     )
+                    Spacer(Modifier.height(14.dp))
+                    Text("Excellent!", style = MaterialTheme.typography.headlineLarge)
                     Spacer(Modifier.height(12.dp))
                     Text(
                         "You've completed your review session.",
@@ -134,9 +139,9 @@ fun ReviewScreen(
                         progress = {
                             if (state.total > 0) (state.currentIndex + 1) / state.total.toFloat() else 0f
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
                     )
-                    Spacer(Modifier.height(32.dp))
+                    Spacer(Modifier.height(24.dp))
                     LingoLensCard(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -144,6 +149,7 @@ fun ReviewScreen(
                             .clickable(enabled = !state.isRevealed) {
                                 onAction(ReviewAction.Reveal)
                             },
+                        contentPadding = PaddingValues(20.dp),
                     ) {
                         Column(
                             Modifier.fillMaxSize(),
@@ -190,29 +196,35 @@ fun ReviewScreen(
                             }
                         }
                     }
-                    Spacer(Modifier.height(24.dp))
+                    Spacer(Modifier.height(18.dp))
                     if (state.isRevealed) {
                         Row(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             ReviewRating.entries.forEach { rating ->
-                                val emphasized = rating == ReviewRating.Good
-                                if (emphasized) {
-                                    Button(
-                                        onClick = { onAction(ReviewAction.Rate(rating)) },
-                                        modifier = Modifier.weight(1f),
-                                    ) {
-                                        Text(rating.name)
-                                    }
-                                } else {
-                                    OutlinedButton(
-                                        onClick = { onAction(ReviewAction.Rate(rating)) },
-                                        modifier = Modifier.weight(1f),
-                                        contentPadding = ButtonDefaults.ContentPadding,
-                                    ) {
-                                        Text(rating.name)
-                                    }
+                                val containerColor = when (rating) {
+                                    ReviewRating.Again -> MaterialTheme.colorScheme.error
+                                    ReviewRating.Hard -> MaterialTheme.colorScheme.tertiary
+                                    ReviewRating.Good -> MaterialTheme.colorScheme.primary
+                                    ReviewRating.Easy -> MaterialTheme.colorScheme.secondary
+                                }
+                                val contentColor = when (rating) {
+                                    ReviewRating.Again -> MaterialTheme.colorScheme.onError
+                                    ReviewRating.Hard -> MaterialTheme.colorScheme.onTertiary
+                                    ReviewRating.Good -> MaterialTheme.colorScheme.onPrimary
+                                    ReviewRating.Easy -> MaterialTheme.colorScheme.onSecondary
+                                }
+                                Button(
+                                    onClick = { onAction(ReviewAction.Rate(rating)) },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = containerColor,
+                                        contentColor = contentColor,
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 3.dp, vertical = 9.dp),
+                                ) {
+                                    Text(rating.name, style = MaterialTheme.typography.labelMedium)
                                 }
                             }
                         }

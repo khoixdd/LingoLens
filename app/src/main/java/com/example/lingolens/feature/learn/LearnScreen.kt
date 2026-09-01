@@ -1,29 +1,39 @@
 package com.example.lingolens.feature.learn
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoStories
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Quiz
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.lingolens.ui.components.LingoLensCard
+import com.example.lingolens.ui.components.SectionHeader
 import com.example.lingolens.ui.theme.LingoLensTheme
 
 @Composable
@@ -34,66 +44,90 @@ fun LearnScreen(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item {
-            Text("Ready to learn?", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text("Keep your momentum going today.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Learn", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                "Build vocabulary one small session at a time.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
         item {
-            LingoLensCard {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Icon(Icons.Outlined.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    LearningShortcut(
+                        modifier = Modifier.weight(1f),
+                        title = "Notebook",
+                        subtitle = "${state.notebookCount} words",
+                        icon = Icons.Outlined.AutoStories,
+                        onClick = { onAction(LearnAction.OpenNotebook) },
+                    )
+                    LearningShortcut(
+                        modifier = Modifier.weight(1f),
+                        title = "Review",
+                        subtitle = "${state.reviewCount} due",
+                        icon = Icons.Outlined.Refresh,
+                        onClick = { onAction(LearnAction.StartReview) },
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    LearningShortcut(
+                        modifier = Modifier.weight(1f),
+                        title = "Quiz",
+                        subtitle = "Practice",
+                        icon = Icons.Outlined.Quiz,
+                        onClick = { onAction(LearnAction.StartQuiz) },
+                    )
+                    LearningShortcut(
+                        modifier = Modifier.weight(1f),
+                        title = "Statistics",
+                        subtitle = "See progress",
+                        icon = Icons.Outlined.BarChart,
+                    )
+                }
+            }
+        }
+        item { SectionHeader("Keep learning") }
+        item {
+            LingoLensCard(containerColor = MaterialTheme.colorScheme.primaryContainer) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("Review today", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        Text("${state.reviewCount} words due", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Daily goal", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "${state.dailyGoalCompleted} of ${state.dailyGoalTarget} words",
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
                     }
-                    Button(onClick = { onAction(LearnAction.StartReview) }) { Text("Start") }
+                    Text(
+                        "${(state.dailyGoalCompleted * 100 / state.dailyGoalTarget.coerceAtLeast(1)).coerceIn(0, 100)}%",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                 }
-            }
-        }
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                LearningShortcut(
-                    modifier = Modifier.weight(1f),
-                    title = "Notebook",
-                    subtitle = "${state.notebookCount} words",
-                    icon = { Icon(Icons.Outlined.AutoStories, contentDescription = null) },
-                    onClick = { onAction(LearnAction.OpenNotebook) },
-                )
-                LearningShortcut(
-                    modifier = Modifier.weight(1f),
-                    title = "Quiz",
-                    subtitle = "Practice",
-                    icon = { Icon(Icons.Outlined.Quiz, contentDescription = null) },
-                    onClick = { onAction(LearnAction.StartQuiz) },
-                )
-            }
-        }
-        item {
-            LingoLensCard {
-                Text("Daily goal", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(10.dp))
                 LinearProgressIndicator(
-                    progress = { (state.dailyGoalCompleted.toFloat() / state.dailyGoalTarget).coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth(),
+                    progress = {
+                        (state.dailyGoalCompleted.toFloat() / state.dailyGoalTarget.coerceAtLeast(1)).coerceIn(0f, 1f)
+                    },
+                    modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
+                    trackColor = MaterialTheme.colorScheme.surface,
                 )
-                Spacer(Modifier.height(8.dp))
-                Text("${state.dailyGoalCompleted} of ${state.dailyGoalTarget} words", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        item { Text("Learning status", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
+        item { SectionHeader("Learning status") }
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    LearningStat("New", state.newCount, Modifier.weight(1f))
-                    LearningStat("Learning", state.learningCount, Modifier.weight(1f))
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    LearningStat("Familiar", state.familiarCount, Modifier.weight(1f))
-                    LearningStat("Mastered", state.masteredCount, Modifier.weight(1f))
-                }
+            LingoLensCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
+                LearningStatusRow("New", state.newCount)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                LearningStatusRow("Learning", state.learningCount)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                LearningStatusRow("Familiar", state.familiarCount)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                LearningStatusRow("Mastered", state.masteredCount)
             }
         }
     }
@@ -103,29 +137,39 @@ fun LearnScreen(
 private fun LearningShortcut(
     title: String,
     subtitle: String,
-    icon: @Composable () -> Unit,
-    onClick: () -> Unit,
+    icon: ImageVector,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
-    androidx.compose.material3.Card(
-        modifier = modifier,
-        onClick = onClick,
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    Surface(
+        modifier = modifier.then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            icon()
-            Text(title, fontWeight = FontWeight.SemiBold)
-            Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(9.dp).size(20.dp),
+                )
+            }
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
 
 @Composable
-private fun LearningStat(label: String, count: Int, modifier: Modifier = Modifier) {
-    LingoLensCard(modifier = modifier) {
-        Text(count.toString(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun LearningStatusRow(label: String, count: Int) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+        Text(count.toString(), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
     }
 }
 

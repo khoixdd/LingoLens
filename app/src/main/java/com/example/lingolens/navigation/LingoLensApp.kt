@@ -1,6 +1,9 @@
 package com.example.lingolens.navigation
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Groups
@@ -10,10 +13,13 @@ import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.entryProvider
@@ -44,36 +50,60 @@ fun LingoLensApp() {
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
+                val dividerColor = androidx.compose.material3.MaterialTheme.colorScheme.outlineVariant
+                val itemColors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                    selectedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                    indicatorColor = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+                    unselectedIconColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                NavigationBar(
+                    modifier = Modifier.fillMaxWidth().height(72.dp).drawBehind {
+                        drawLine(
+                            color = dividerColor,
+                            start = Offset.Zero,
+                            end = Offset(size.width, 0f),
+                            strokeWidth = 1.dp.toPx(),
+                        )
+                    },
+                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+                    tonalElevation = 0.dp,
+                ) {
                     NavigationBarItem(
                         selected = current == Home,
                         onClick = { backStack.openRoot(Home) },
                         icon = { Icon(Icons.Outlined.Home, contentDescription = null) },
                         label = { Text("Home") },
+                        colors = itemColors,
                     )
                     NavigationBarItem(
                         selected = current == Scan,
                         onClick = { backStack.openRoot(Scan) },
                         icon = { Icon(Icons.Outlined.CameraAlt, contentDescription = null) },
                         label = { Text("Scan") },
+                        colors = itemColors,
                     )
                     NavigationBarItem(
                         selected = current == Learn,
                         onClick = { backStack.openRoot(Learn) },
                         icon = { Icon(Icons.Outlined.School, contentDescription = null) },
                         label = { Text("Learn") },
+                        colors = itemColors,
                     )
                     NavigationBarItem(
                         selected = current == Community,
                         onClick = { backStack.openRoot(Community) },
                         icon = { Icon(Icons.Outlined.Groups, contentDescription = null) },
                         label = { Text("Community") },
+                        colors = itemColors,
                     )
                     NavigationBarItem(
                         selected = current == Profile,
                         onClick = { backStack.openRoot(Profile) },
                         icon = { Icon(Icons.Outlined.Person, contentDescription = null) },
                         label = { Text("Profile") },
+                        colors = itemColors,
                     )
                 }
             }

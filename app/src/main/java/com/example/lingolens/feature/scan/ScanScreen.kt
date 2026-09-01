@@ -2,7 +2,6 @@ package com.example.lingolens.feature.scan
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Close
@@ -32,8 +30,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -76,32 +75,35 @@ fun ScanScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    text = "Point at the text",
-                    color = previewContentColor,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = "Keep the words inside the frame",
-                    color = previewContentColor.copy(alpha = 0.72f),
-                    modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1.15f)
-                        .border(
-                            BorderStroke(3.dp, MaterialTheme.colorScheme.primary),
-                            RoundedCornerShape(24.dp),
-                        ),
-                    contentAlignment = Alignment.Center,
+                ScanFrame(
+                    modifier = Modifier.fillMaxWidth().aspectRatio(0.82f),
+                    accentColor = MaterialTheme.colorScheme.primary,
                 ) {
-                    Text(
-                        text = "Camera preview",
-                        color = previewContentColor.copy(alpha = 0.45f),
-                        textAlign = TextAlign.Center,
-                    )
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(0.72f).aspectRatio(0.78f),
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                        shadowElevation = 6.dp,
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(18.dp),
+                        ) {
+                            Text(
+                                text = "Point at the text",
+                                color = MaterialTheme.colorScheme.onSurface,
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            Text(
+                                text = "Keep the words inside the frame",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(top = 6.dp),
+                            )
+                        }
+                    }
                 }
             }
 
@@ -109,6 +111,26 @@ fun ScanScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                Box(Modifier.weight(1f))
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    Surface(
+                        onClick = { onAction(ScanAction.Capture) },
+                        modifier = Modifier.size(76.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        border = BorderStroke(5.dp, previewContentColor),
+                        shadowElevation = 8.dp,
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Outlined.CameraAlt,
+                                contentDescription = "Capture text",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(30.dp),
+                            )
+                        }
+                    }
+                }
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         IconButton(onClick = { onAction(ScanAction.OpenGallery) }) {
@@ -117,25 +139,6 @@ fun ScanScreen(
                         Text("Gallery", color = previewContentColor, style = MaterialTheme.typography.labelMedium)
                     }
                 }
-                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    Surface(
-                        onClick = { onAction(ScanAction.Capture) },
-                        modifier = Modifier.size(80.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        shadowElevation = 8.dp,
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Outlined.CameraAlt,
-                                contentDescription = "Capture text",
-                                tint = Color.White,
-                                modifier = Modifier.size(32.dp),
-                            )
-                        }
-                    }
-                }
-                Box(Modifier.weight(1f))
             }
         }
 
@@ -151,6 +154,38 @@ fun ScanScreen(
                 Text(message)
             }
         }
+    }
+}
+
+@Composable
+private fun ScanFrame(
+    accentColor: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = modifier.drawBehind {
+            val corner = 42.dp.toPx()
+            val inset = 3.dp.toPx()
+            val stroke = 4.dp.toPx()
+            val right = size.width - inset
+            val bottom = size.height - inset
+            listOf(
+                Offset(inset + corner, inset) to Offset(inset, inset),
+                Offset(inset, inset) to Offset(inset, inset + corner),
+                Offset(right - corner, inset) to Offset(right, inset),
+                Offset(right, inset) to Offset(right, inset + corner),
+                Offset(inset, bottom - corner) to Offset(inset, bottom),
+                Offset(inset, bottom) to Offset(inset + corner, bottom),
+                Offset(right - corner, bottom) to Offset(right, bottom),
+                Offset(right, bottom - corner) to Offset(right, bottom),
+            ).forEach { (start, end) ->
+                drawLine(accentColor, start, end, strokeWidth = stroke, cap = StrokeCap.Round)
+            }
+        },
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
     }
 }
 

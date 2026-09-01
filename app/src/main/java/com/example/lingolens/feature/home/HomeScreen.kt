@@ -12,26 +12,32 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.LocalFireDepartment
+import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.Stars
-import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.lingolens.ui.components.LingoLensCard
+import com.example.lingolens.ui.components.LingoLensPrimaryButton
+import com.example.lingolens.ui.components.SectionHeader
 import com.example.lingolens.ui.theme.LingoLensTheme
 
 @Composable
@@ -42,114 +48,132 @@ fun HomeScreen(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item {
-            Text(
-                text = "Hello, ${state.name}!",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "A little practice today goes a long way.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(text = "Hello, ${state.name}!", style = MaterialTheme.typography.headlineSmall)
+                    Text(
+                        text = "Ready for a little progress?",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                Surface(modifier = Modifier.size(40.dp), shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Outlined.NotificationsNone,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+            }
         }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 HomeStat(
-                    icon = { Icon(Icons.Outlined.LocalFireDepartment, contentDescription = null) },
-                    value = "${state.streakDays} days",
-                    label = "Streak",
+                    icon = Icons.Outlined.LocalFireDepartment,
+                    value = state.streakDays.toString(),
+                    label = "day streak",
                     modifier = Modifier.weight(1f),
                 )
                 HomeStat(
-                    icon = { Icon(Icons.Outlined.Stars, contentDescription = null) },
+                    icon = Icons.Outlined.Stars,
                     value = "Lv. ${state.level}",
                     label = state.title,
-                    modifier = Modifier.weight(1f),
-                )
-                HomeStat(
-                    icon = { Text("XP", fontWeight = FontWeight.Bold) },
-                    value = state.xp.toString(),
-                    label = "Experience",
                     modifier = Modifier.weight(1f),
                 )
             }
         }
         item {
-            LingoLensCard {
-                Text("Daily goal", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(12.dp))
+            LingoLensCard(containerColor = MaterialTheme.colorScheme.primaryContainer) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Daily goal", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "${state.dailyWordsCompleted} / ${state.dailyWordsGoal} words",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                    Text(
+                        "${(state.dailyWordsGoal - state.dailyWordsCompleted).coerceAtLeast(0)} left",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
                 LinearProgressIndicator(
                     progress = {
                         (state.dailyWordsCompleted.toFloat() / state.dailyWordsGoal.coerceAtLeast(1))
                             .coerceIn(0f, 1f)
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "${state.dailyWordsCompleted} / ${state.dailyWordsGoal} words",
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    "Keep going! ${(state.dailyWordsGoal - state.dailyWordsCompleted).coerceAtLeast(0)} words left",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
+                    trackColor = MaterialTheme.colorScheme.surface,
                 )
             }
         }
         item {
-            LingoLensCard {
+            LingoLensCard(contentPadding = PaddingValues(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Outlined.AutoStories,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                    Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                        Text("Today's review", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        Text("${state.reviewWordsDue} words due", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
+                        Icon(
+                            Icons.Outlined.AutoStories,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(10.dp).size(20.dp),
+                        )
                     }
-                    Button(onClick = { onAction(HomeAction.OpenReview) }) { Text("Review now") }
+                    Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                        Text("Today's review", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "${state.reviewWordsDue} words due",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    FilledTonalButton(onClick = { onAction(HomeAction.OpenReview) }) { Text("Review") }
                 }
             }
         }
+        item { SectionHeader("This week") }
         item {
-            LingoLensCard {
-                Text("Weekly activity", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(16.dp))
+            LingoLensCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
                 WeeklyActivityChart(state.weeklyActivity)
             }
         }
         item {
-            Button(
-                onClick = { onAction(HomeAction.OpenLearn) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Continue learning")
-            }
+            LingoLensPrimaryButton(text = "Continue learning", onClick = { onAction(HomeAction.OpenLearn) })
         }
     }
 }
 
 @Composable
 private fun HomeStat(
-    icon: @Composable () -> Unit,
+    icon: ImageVector,
     value: String,
     label: String,
     modifier: Modifier = Modifier,
 ) {
-    LingoLensCard(modifier = modifier, contentPadding = PaddingValues(12.dp)) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Box(contentAlignment = Alignment.Center) { icon() }
-            Text(value, fontWeight = FontWeight.Bold)
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    LingoLensCard(modifier = modifier, contentPadding = PaddingValues(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(8.dp).size(18.dp),
+                )
+            }
+            Column(Modifier.padding(start = 10.dp)) {
+                Text(value, style = MaterialTheme.typography.titleMedium)
+                Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
     }
 }
@@ -158,25 +182,30 @@ private fun HomeStat(
 private fun WeeklyActivityChart(activity: List<DailyActivity>) {
     val highest = activity.maxOfOrNull { it.words }?.coerceAtLeast(1) ?: 1
     Row(
-        modifier = Modifier.fillMaxWidth().height(104.dp),
+        modifier = Modifier.fillMaxWidth().height(90.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Bottom,
     ) {
         activity.forEach { item ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
-                    modifier = Modifier.height(72.dp),
+                    modifier = Modifier.height(62.dp),
                     contentAlignment = Alignment.BottomCenter,
                 ) {
                     Box(
                         modifier = Modifier
-                            .width(16.dp)
+                            .width(12.dp)
                             .fillMaxHeight(item.words.toFloat() / highest)
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
                             .background(MaterialTheme.colorScheme.primary),
                     )
                 }
-                Text(item.day, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 6.dp))
+                Text(
+                    item.day,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
             }
         }
     }

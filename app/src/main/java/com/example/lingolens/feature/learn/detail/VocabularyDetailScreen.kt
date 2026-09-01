@@ -6,10 +6,13 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.VolumeUp
@@ -22,10 +25,12 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -37,12 +42,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.lingolens.domain.model.MasteryLevel
-import com.example.lingolens.ui.components.LingoLensCard
 import com.example.lingolens.ui.theme.LingoLensTheme
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -90,49 +95,63 @@ fun VocabularyDetailScreen(
             Modifier
                 .fillMaxSize()
                 .padding(insets),
-            contentPadding = PaddingValues(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            state.word,
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Bold,
-                        )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(state.word, style = MaterialTheme.typography.headlineLarge)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         if (state.pronunciation.isNotBlank()) {
-                            Text(state.pronunciation, color = MaterialTheme.colorScheme.primary)
+                            Text(
+                                state.pronunciation,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.weight(1f),
+                            )
+                        } else {
+                            Spacer(Modifier.weight(1f))
                         }
-                        if (state.partOfSpeech.isNotBlank()) {
-                            Text(state.partOfSpeech, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
+                            IconButton(onClick = { onAction(VocabularyDetailAction.PlayPronunciation) }) {
+                                Icon(
+                                    Icons.AutoMirrored.Outlined.VolumeUp,
+                                    "Pronounce",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
+                            }
                         }
                     }
-                    IconButton(onClick = { onAction(VocabularyDetailAction.PlayPronunciation) }) {
-                        Icon(Icons.AutoMirrored.Outlined.VolumeUp, "Pronounce")
+                    if (state.partOfSpeech.isNotBlank()) {
+                        AssistChip(onClick = {}, label = { Text(state.partOfSpeech) })
                     }
                 }
             }
             item {
-                LingoLensCard {
-                    Text(
-                        "Vietnamese meaning",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    Text(state.meaning, style = MaterialTheme.typography.titleMedium)
-                }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Spacer(Modifier.height(14.dp))
+                Text(
+                    "Vietnamese meaning",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(state.meaning, style = MaterialTheme.typography.titleLarge)
             }
             if (state.example.isNotBlank()) {
                 item {
-                    LingoLensCard {
-                        Text(
-                            "Example",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        Text(state.example, fontStyle = FontStyle.Italic)
-                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Spacer(Modifier.height(14.dp))
+                    Text(
+                        "Example",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        state.example,
+                        fontStyle = FontStyle.Italic,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
             if (state.tags.isNotEmpty()) {
@@ -150,11 +169,10 @@ fun VocabularyDetailScreen(
                 }
             }
             item {
-                Text(
-                    "Mastery",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Spacer(Modifier.height(14.dp))
+                Text("Mastery", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(12.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     MasteryLevel.entries.forEach { level ->
                         Text(
@@ -171,9 +189,7 @@ fun VocabularyDetailScreen(
                 }
                 LinearProgressIndicator(
                     progress = { (state.mastery.ordinal + 1) / MasteryLevel.entries.size.toFloat() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(7.dp).clip(CircleShape),
                 )
             }
         }

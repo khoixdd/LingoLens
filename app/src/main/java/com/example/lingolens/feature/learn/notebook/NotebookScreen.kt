@@ -1,5 +1,6 @@
 package com.example.lingolens.feature.learn.notebook
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -29,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -90,7 +92,13 @@ fun NotebookScreen(
                 placeholder = { Text("Search words or meanings") },
                 leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
                 singleLine = true,
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.medium,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                ),
             )
             LazyRow(
                 contentPadding = PaddingValues(16.dp),
@@ -121,7 +129,7 @@ fun NotebookScreen(
                 )
                 is NotebookContentState.Content -> LazyColumn(
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 80.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(content.words, key = { it.id }) { word ->
                         VocabularyCard(
@@ -139,14 +147,14 @@ fun NotebookScreen(
     if (state.showAddDialog) {
         AddWordDialog(
             onDismiss = { onAction(NotebookAction.ShowAddDialog(false)) },
-            onAdd = { word, meaning, pronunciation, partOfSpeech, example, tag ->
+            onAdd = { word, meaning, tag ->
                 onAction(
                     NotebookAction.AddWord(
                         word = word,
                         meaning = meaning,
-                        pronunciation = pronunciation,
-                        partOfSpeech = partOfSpeech,
-                        example = example,
+                        pronunciation = "",
+                        partOfSpeech = "",
+                        example = "",
                         tag = tag,
                     ),
                 )
@@ -164,12 +172,15 @@ private fun VocabularyCard(
 ) {
     Card(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(18.dp),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.Top,
         ) {
             Column(
@@ -190,7 +201,7 @@ private fun VocabularyCard(
                 }
                 Text(word.meaning, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(
-                    "${word.partOfSpeech.ifBlank { "word" }} • ${word.masteryLevel.label}",
+                    "${word.partOfSpeech.ifBlank { "word" }}  |  ${word.masteryLevel.label}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -218,13 +229,10 @@ private fun VocabularyCard(
 @Composable
 private fun AddWordDialog(
     onDismiss: () -> Unit,
-    onAdd: (String, String, String, String, String, String) -> Unit,
+    onAdd: (String, String, String) -> Unit,
 ) {
     var word by remember { mutableStateOf("") }
     var meaning by remember { mutableStateOf("") }
-    var pronunciation by remember { mutableStateOf("") }
-    var partOfSpeech by remember { mutableStateOf("") }
-    var example by remember { mutableStateOf("") }
     var tag by remember { mutableStateOf("") }
 
     AlertDialog(
@@ -245,26 +253,10 @@ private fun AddWordDialog(
                     singleLine = true,
                 )
                 OutlinedTextField(
-                    value = pronunciation,
-                    onValueChange = { pronunciation = it },
-                    label = { Text("Pronunciation (e.g. /word/)") },
-                    singleLine = true,
-                )
-                OutlinedTextField(
-                    value = partOfSpeech,
-                    onValueChange = { partOfSpeech = it },
-                    label = { Text("Part of Speech (e.g. noun, verb)") },
-                    singleLine = true,
-                )
-                OutlinedTextField(
-                    value = example,
-                    onValueChange = { example = it },
-                    label = { Text("Example sentence") },
-                )
-                OutlinedTextField(
                     value = tag,
                     onValueChange = { tag = it },
-                    label = { Text("Tag (e.g. Technology, Travel)") },
+                    label = { Text("Tag (optional)") },
+                    placeholder = { Text("Technology, Travel...") },
                     singleLine = true,
                 )
             }
@@ -273,7 +265,7 @@ private fun AddWordDialog(
             TextButton(
                 onClick = {
                     if (word.isNotBlank() && meaning.isNotBlank()) {
-                        onAdd(word, meaning, pronunciation, partOfSpeech, example, tag)
+                        onAdd(word, meaning, tag)
                     }
                 },
                 enabled = word.isNotBlank() && meaning.isNotBlank(),

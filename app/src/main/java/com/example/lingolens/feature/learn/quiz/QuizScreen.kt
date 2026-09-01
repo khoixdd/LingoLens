@@ -5,11 +5,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Cancel
@@ -24,11 +26,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -85,8 +89,8 @@ fun QuizScreen(
                     Modifier
                         .fillMaxSize()
                         .padding(insets),
-                    contentPadding = PaddingValues(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     item {
                         Text(
@@ -101,7 +105,8 @@ fun QuizScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 8.dp),
+                                .padding(top = 8.dp)
+                                .clip(CircleShape),
                         )
                     }
                     item {
@@ -113,7 +118,7 @@ fun QuizScreen(
                             state.word,
                             style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 16.dp),
+                            modifier = Modifier.padding(top = 10.dp),
                         )
                     }
                     items(state.options.size) { index ->
@@ -128,20 +133,30 @@ fun QuizScreen(
                         item {
                             val correct = state.answerState == QuizAnswerState.Correct
                             val correctOptionText = state.options.getOrNull(state.correctIndex) ?: ""
-                            LingoLensCard {
-                                Icon(
-                                    if (correct) Icons.Outlined.CheckCircle else Icons.Outlined.Cancel,
-                                    contentDescription = null,
-                                    tint = if (correct) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                                )
-                                Text(
-                                    if (correct) {
-                                        "Correct! Well done."
-                                    } else {
-                                        "Not quite. The correct answer is: $correctOptionText"
-                                    },
-                                    fontWeight = FontWeight.SemiBold,
-                                )
+                            LingoLensCard(
+                                containerColor = if (correct) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.errorContainer
+                                },
+                                contentPadding = PaddingValues(14.dp),
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        if (correct) Icons.Outlined.CheckCircle else Icons.Outlined.Cancel,
+                                        contentDescription = null,
+                                        tint = if (correct) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                                    )
+                                    Text(
+                                        if (correct) {
+                                            "Correct! Well done."
+                                        } else {
+                                            "Not quite. The answer is $correctOptionText."
+                                        },
+                                        modifier = Modifier.padding(start = 10.dp),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                }
                             }
                         }
                     }
@@ -189,14 +204,33 @@ private fun QuizOption(
         enabled = !checked,
         colors = CardDefaults.cardColors(containerColor = container),
         border = BorderStroke(if (isSelected || isCorrect) 2.dp else 1.dp, border),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
-        Text(
-            "${('A'.code + index).toChar()}.  $text",
-            modifier = Modifier.padding(18.dp),
-            fontWeight = if (isSelected || isCorrect) FontWeight.SemiBold else FontWeight.Normal,
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                modifier = Modifier.size(32.dp),
+                shape = CircleShape,
+                color = if (isSelected || isCorrect || isWrong) border else MaterialTheme.colorScheme.surfaceVariant,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        ('A'.code + index).toChar().toString(),
+                        color = if (isSelected || isCorrect || isWrong) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+            }
+            Text(
+                text,
+                modifier = Modifier.padding(start = 12.dp),
+                fontWeight = if (isSelected || isCorrect) FontWeight.SemiBold else FontWeight.Normal,
+            )
+        }
     }
 }
 
