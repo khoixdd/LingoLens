@@ -63,10 +63,17 @@ import java.util.concurrent.Executor
 import com.example.lingolens.ui.theme.LingoLensTheme
 import com.example.lingolens.feature.scan.component.CameraPreview
 import com.example.lingolens.feature.scan.component.captureAndExtractText
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+
 @Composable
 fun ScanScreen(
     state: ScanUiState,
     onAction: (ScanAction) -> Unit,
+    events: Flow<ScanEvent> = emptyFlow(),
+    onNavigateToLearn: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -91,6 +98,15 @@ fun ScanScreen(
         ImageCapture.Builder()
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
             .build() 
+    }
+
+    LaunchedEffect(Unit) {
+        events.collect { event ->
+            when (event) {
+                is ScanEvent.NavigateToLearn -> onNavigateToLearn()
+                else -> {}
+            }
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -211,22 +227,13 @@ fun ScanScreen(
                         shadowElevation = 8.dp,
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            if (state.isScanning) {
-                                // Show a loading spinner while ML Kit processes the image
-                                CircularProgressIndicator(
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.size(30.dp),
-                                    strokeWidth = 3.dp
-                                )
-                            } else {
-                                // Show the standard camera icon
-                                Icon(
-                                    Icons.Outlined.CameraAlt,
-                                    contentDescription = "Capture text",
-                                    tint = if (hasCameraPermission) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(30.dp),
-                                )
-                            }
+                            // Show the standard camera icon
+                            Icon(
+                                Icons.Outlined.CameraAlt,
+                                contentDescription = "Capture text",
+                                tint = if (hasCameraPermission) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(30.dp),
+                            )
                         }
                     }
                 }
@@ -251,6 +258,28 @@ fun ScanScreen(
                 },
             ) {
                 Text(message)
+            }
+        }
+
+        if (state.isScanning) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f)) // Dim the background
+                    // Intercept and discard all clicks so they don't reach the buttons below
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {} 
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                // The loading spinner in the center of the screen
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(64.dp),
+                    strokeWidth = 6.dp
+                )
             }
         }
     }
