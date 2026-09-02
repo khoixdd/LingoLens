@@ -9,6 +9,14 @@ enum class NotebookFilter(val label: String) {
     Travel("Travel"),
 }
 
+enum class NotebookSortOption(val label: String) {
+    Newest("Newest"),
+    Oldest("Oldest"),
+    Alphabetical_AZ("A - Z"),
+    Alphabetical_ZA("Z - A"),
+    Mastery("Mastery"),
+}
+
 sealed interface NotebookContentState {
     data object Loading : NotebookContentState
     data object Empty : NotebookContentState
@@ -19,6 +27,7 @@ sealed interface NotebookContentState {
 data class NotebookUiState(
     val searchQuery: String = "",
     val selectedFilter: NotebookFilter = NotebookFilter.All,
+    val selectedSort: NotebookSortOption = NotebookSortOption.Newest,
     val showAddDialog: Boolean = false,
     val content: NotebookContentState = NotebookContentState.Loading,
 )

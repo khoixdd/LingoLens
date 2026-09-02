@@ -2,6 +2,7 @@ package com.example.lingolens.feature.learn.review
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lingolens.core.common.TextToSpeechHelper
 import com.example.lingolens.domain.model.MasteryLevel
 import com.example.lingolens.domain.model.Vocabulary
 import com.example.lingolens.domain.repository.VocabularyRepository
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ReviewViewModel @Inject constructor(
     private val repository: VocabularyRepository,
+    private val ttsHelper: TextToSpeechHelper,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReviewUiState())
@@ -32,7 +34,10 @@ class ReviewViewModel @Inject constructor(
         viewModelScope.launch {
             repository.seedSampleDataIfEmpty()
             val allWords = repository.getAllVocabulary().first()
-            reviewWords = allWords.take(15)
+            val now = System.currentTimeMillis()
+            reviewWords = allWords.filter { word ->
+                word.nextReviewAt == null || word.nextReviewAt <= now
+            }.ifEmpty { allWords.take(15) }
 
             if (reviewWords.isEmpty()) {
                 _uiState.update {
@@ -73,6 +78,12 @@ class ReviewViewModel @Inject constructor(
     fun onAction(action: ReviewAction) {
         when (action) {
             ReviewAction.Reveal -> _uiState.update { it.copy(isRevealed = true) }
+            ReviewAction.PlayPronunciation -> {
+                val currentWord = _uiState.value.word
+                if (currentWord.isNotBlank()) {
+                    ttsHelper.speak(currentWord)
+                }
+            }
             is ReviewAction.Rate -> {
                 val index = _uiState.value.currentIndex
                 if (index < reviewWords.size) {
@@ -84,7 +95,7 @@ class ReviewViewModel @Inject constructor(
                     updateStateForCurrentIndex(index + 1)
                 }
             }
-            ReviewAction.Back, ReviewAction.PlayPronunciation -> Unit
+            ReviewAction.Back -> Unit
         }
     }
 
@@ -114,13 +125,13 @@ class ReviewViewModel @Inject constructor(
                 },
                 1,
                 0,
-                4,
+                5,
             )
             ReviewRating.Easy -> Tuple(
                 MasteryLevel.Mastered,
                 1,
                 0,
-                7,
+                10,
             )
         }
 
@@ -131,6 +142,11 @@ class ReviewViewModel @Inject constructor(
             lastReviewedAt = now,
             nextReviewAt = now + (daysUntilNext * oneDayMs),
         )
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        ttsHelper.shutdown()
     }
 
     private data class Tuple(

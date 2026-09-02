@@ -1,5 +1,6 @@
 package com.example.lingolens
 
+import com.example.lingolens.core.common.TextToSpeechHelper
 import com.example.lingolens.domain.model.MasteryLevel
 import com.example.lingolens.domain.model.Vocabulary
 import com.example.lingolens.domain.repository.VocabularyRepository
@@ -34,6 +35,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mockito.mock
 
 class FakeVocabularyRepository : VocabularyRepository {
     private val items = MutableStateFlow<List<Vocabulary>>(
@@ -62,6 +64,7 @@ class FakeVocabularyRepository : VocabularyRepository {
 class FeatureViewModelTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
+    private val ttsHelper = mock(TextToSpeechHelper::class.java)
 
     @Before
     fun setUp() {
@@ -76,7 +79,7 @@ class FeatureViewModelTest {
     @Test
     fun notebookSearchExposesNoResultsState() = runTest(testDispatcher) {
         val repository = FakeVocabularyRepository()
-        val viewModel = NotebookViewModel(repository)
+        val viewModel = NotebookViewModel(repository, ttsHelper)
         backgroundScope.launch {
             viewModel.uiState.collect {}
         }
@@ -89,7 +92,7 @@ class FeatureViewModelTest {
     @Test
     fun reviewRevealAndRatingAdvanceTheCard() = runTest(testDispatcher) {
         val repository = FakeVocabularyRepository()
-        val viewModel = ReviewViewModel(repository)
+        val viewModel = ReviewViewModel(repository, ttsHelper)
 
         viewModel.onAction(ReviewAction.Reveal)
         assertTrue(viewModel.uiState.value.isRevealed)

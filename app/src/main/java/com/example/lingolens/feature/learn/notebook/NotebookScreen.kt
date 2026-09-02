@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.VolumeUp
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Favorite
@@ -101,7 +102,7 @@ fun NotebookScreen(
                 ),
             )
             LazyRow(
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(NotebookFilter.entries) { filter ->
@@ -109,6 +110,18 @@ fun NotebookScreen(
                         selected = state.selectedFilter == filter,
                         onClick = { onAction(NotebookAction.FilterSelected(filter)) },
                         label = { Text(filter.label) },
+                    )
+                }
+            }
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(NotebookSortOption.entries) { sortOption ->
+                    FilterChip(
+                        selected = state.selectedSort == sortOption,
+                        onClick = { onAction(NotebookAction.SortSelected(sortOption)) },
+                        label = { Text("Sort: ${sortOption.label}") },
                     )
                 }
             }
@@ -128,7 +141,7 @@ fun NotebookScreen(
                     "Try another search or filter.",
                 )
                 is NotebookContentState.Content -> LazyColumn(
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 80.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 80.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(content.words, key = { it.id }) { word ->
@@ -137,6 +150,7 @@ fun NotebookScreen(
                             onClick = { onAction(NotebookAction.WordSelected(word.id)) },
                             onFavorite = { onAction(NotebookAction.FavoriteToggled(word.id)) },
                             onDelete = { onAction(NotebookAction.DeleteWord(word.id)) },
+                            onSpeak = { onAction(NotebookAction.PlayPronunciation(word.word)) },
                         )
                     }
                 }
@@ -169,6 +183,7 @@ private fun VocabularyCard(
     onClick: () -> Unit,
     onFavorite: () -> Unit,
     onDelete: () -> Unit,
+    onSpeak: () -> Unit,
 ) {
     Card(
         onClick = onClick,
@@ -187,11 +202,21 @@ private fun VocabularyCard(
                 Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(
-                    word.word,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        word.word,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    IconButton(onClick = onSpeak) {
+                        Icon(
+                            Icons.AutoMirrored.Outlined.VolumeUp,
+                            contentDescription = "Speak",
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
                 if (word.pronunciation.isNotBlank()) {
                     Text(
                         word.pronunciation,

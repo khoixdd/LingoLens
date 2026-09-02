@@ -2,6 +2,7 @@ package com.example.lingolens.feature.learn.notebook
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lingolens.core.common.TextToSpeechHelper
 import com.example.lingolens.domain.model.Vocabulary
 import com.example.lingolens.domain.repository.VocabularyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,16 +13,17 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class NotebookViewModel @Inject constructor(
     private val repository: VocabularyRepository,
+    private val ttsHelper: TextToSpeechHelper,
 ) : ViewModel() {
 
     private val searchQuery = MutableStateFlow("")
     private val selectedFilter = MutableStateFlow(NotebookFilter.All)
+    private val selectedSort = MutableStateFlow(NotebookSortOption.Newest)
     private val showAddDialog = MutableStateFlow(false)
 
     init {
@@ -34,12 +36,14 @@ class NotebookViewModel @Inject constructor(
         repository.getAllVocabulary(),
         searchQuery,
         selectedFilter,
+        selectedSort,
         showAddDialog,
-    ) { allWords, query, filter, showDialog ->
+    ) { allWords, query, filter, sort, showDialog ->
         val filtered = allWords.filter { item ->
             val matchesSearch = query.isBlank() ||
                 item.word.contains(query, ignoreCase = true) ||
-                item.meaning.contains(query, ignoreCase = true)
+                item.meaning.contains(query, ignoreCase = true) ||
+                item.tags.any { it.contains(query, ignoreCase = true) }
             val matchesFilter = when (filter) {
                 NotebookFilter.All -> true
                 NotebookFilter.Favorite -> item.isFavorite
@@ -49,15 +53,24 @@ class NotebookViewModel @Inject constructor(
             matchesSearch && matchesFilter
         }
 
+        val sorted = when (sort) {
+            NotebookSortOption.Newest -> filtered.sortedByDescending { it.createdAt }
+            NotebookSortOption.Oldest -> filtered.sortedBy { it.createdAt }
+            NotebookSortOption.Alphabetical_AZ -> filtered.sortedBy { it.word.lowercase() }
+            NotebookSortOption.Alphabetical_ZA -> filtered.sortedByDescending { it.word.lowercase() }
+            NotebookSortOption.Mastery -> filtered.sortedBy { it.masteryLevel.ordinal }
+        }
+
         val contentState = when {
             allWords.isEmpty() -> NotebookContentState.Empty
-            filtered.isEmpty() -> NotebookContentState.NoSearchResults
-            else -> NotebookContentState.Content(filtered)
+            sorted.isEmpty() -> NotebookContentState.NoSearchResults
+            else -> NotebookContentState.Content(sorted)
         }
 
         NotebookUiState(
             searchQuery = query,
             selectedFilter = filter,
+            selectedSort = sort,
             showAddDialog = showDialog,
             content = contentState,
         )
@@ -71,6 +84,7 @@ class NotebookViewModel @Inject constructor(
         when (action) {
             is NotebookAction.SearchChanged -> searchQuery.value = action.query
             is NotebookAction.FilterSelected -> selectedFilter.value = action.filter
+            is NotebookAction.SortSelected -> selectedSort.value = action.sort
             is NotebookAction.FavoriteToggled -> {
                 viewModelScope.launch {
                     repository.toggleFavorite(action.wordId)
@@ -82,6 +96,9 @@ class NotebookViewModel @Inject constructor(
                 }
             }
             is NotebookAction.ShowAddDialog -> showAddDialog.value = action.show
+            is NotebookAction.PlayPronunciation -> {
+                ttsHelper.speak(action.text)
+            }
             is NotebookAction.AddWord -> {
                 viewModelScope.launch {
                     val newWord = Vocabulary(
@@ -99,5 +116,10 @@ class NotebookViewModel @Inject constructor(
             }
             NotebookAction.Back, is NotebookAction.WordSelected -> Unit
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        ttsHelper.shutdown()
     }
 }

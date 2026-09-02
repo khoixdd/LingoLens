@@ -1,5 +1,7 @@
 package com.example.lingolens.feature.learn.review
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,9 +30,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -117,6 +121,12 @@ fun ReviewScreen(
                 }
             }
             else -> {
+                val rotation by animateFloatAsState(
+                    targetValue = if (state.isRevealed) 180f else 0f,
+                    animationSpec = tween(durationMillis = 500),
+                    label = "CardFlipAnimation",
+                )
+
                 Column(
                     Modifier
                         .fillMaxSize()
@@ -139,47 +149,86 @@ fun ReviewScreen(
                         progress = {
                             if (state.total > 0) (state.currentIndex + 1) / state.total.toFloat() else 0f
                         },
-                        modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(7.dp)
+                            .clip(CircleShape),
                     )
                     Spacer(Modifier.height(24.dp))
+
                     LingoLensCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
+                            .graphicsLayer {
+                                rotationY = rotation
+                                cameraDistance = 12f * density
+                            }
                             .clickable(enabled = !state.isRevealed) {
                                 onAction(ReviewAction.Reveal)
                             },
                         contentPadding = PaddingValues(20.dp),
                     ) {
-                        Column(
-                            Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            Text(
-                                state.word,
-                                style = MaterialTheme.typography.headlineLarge,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                            )
-                            if (state.pronunciation.isNotBlank()) {
+                        if (rotation <= 90f) {
+                            Column(
+                                Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
                                 Text(
-                                    state.pronunciation,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    state.word,
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                )
+                                if (state.pronunciation.isNotBlank()) {
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(
+                                        state.pronunciation,
+                                        color = MaterialTheme.colorScheme.primary,
+                                    )
+                                }
+                                IconButton(onClick = { onAction(ReviewAction.PlayPronunciation) }) {
+                                    Icon(Icons.AutoMirrored.Outlined.VolumeUp, "Pronounce")
+                                }
+                                Spacer(Modifier.height(24.dp))
+                                Text(
+                                    "Tap to reveal",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            IconButton(onClick = { onAction(ReviewAction.PlayPronunciation) }) {
-                                Icon(Icons.AutoMirrored.Outlined.VolumeUp, "Pronounce")
-                            }
-                            if (state.isRevealed) {
-                                Spacer(Modifier.height(24.dp))
+                        } else {
+                            Column(
+                                Modifier
+                                    .fillMaxSize()
+                                    .graphicsLayer { rotationY = 180f },
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                Text(
+                                    state.word,
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                )
+                                if (state.pronunciation.isNotBlank()) {
+                                    Text(
+                                        state.pronunciation,
+                                        color = MaterialTheme.colorScheme.primary,
+                                    )
+                                }
+                                IconButton(onClick = { onAction(ReviewAction.PlayPronunciation) }) {
+                                    Icon(Icons.AutoMirrored.Outlined.VolumeUp, "Pronounce")
+                                }
+                                Spacer(Modifier.height(20.dp))
                                 Text(
                                     state.meaning,
                                     style = MaterialTheme.typography.titleMedium,
                                     textAlign = TextAlign.Center,
+                                    fontWeight = FontWeight.SemiBold,
                                 )
                                 if (state.example.isNotBlank()) {
-                                    Spacer(Modifier.height(16.dp))
+                                    Spacer(Modifier.height(12.dp))
                                     Text(
                                         state.example,
                                         fontStyle = FontStyle.Italic,
@@ -187,15 +236,10 @@ fun ReviewScreen(
                                         textAlign = TextAlign.Center,
                                     )
                                 }
-                            } else {
-                                Spacer(Modifier.height(24.dp))
-                                Text(
-                                    "Tap to reveal",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
                             }
                         }
                     }
+
                     Spacer(Modifier.height(18.dp))
                     if (state.isRevealed) {
                         Row(
@@ -203,17 +247,11 @@ fun ReviewScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             ReviewRating.entries.forEach { rating ->
-                                val containerColor = when (rating) {
-                                    ReviewRating.Again -> MaterialTheme.colorScheme.error
-                                    ReviewRating.Hard -> MaterialTheme.colorScheme.tertiary
-                                    ReviewRating.Good -> MaterialTheme.colorScheme.primary
-                                    ReviewRating.Easy -> MaterialTheme.colorScheme.secondary
-                                }
-                                val contentColor = when (rating) {
-                                    ReviewRating.Again -> MaterialTheme.colorScheme.onError
-                                    ReviewRating.Hard -> MaterialTheme.colorScheme.onTertiary
-                                    ReviewRating.Good -> MaterialTheme.colorScheme.onPrimary
-                                    ReviewRating.Easy -> MaterialTheme.colorScheme.onSecondary
+                                val (containerColor, contentColor, intervalText) = when (rating) {
+                                    ReviewRating.Again -> Triple(MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.onError, "< 1d")
+                                    ReviewRating.Hard -> Triple(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary, "2d")
+                                    ReviewRating.Good -> Triple(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, "5d")
+                                    ReviewRating.Easy -> Triple(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, "10d")
                                 }
                                 Button(
                                     onClick = { onAction(ReviewAction.Rate(rating)) },
@@ -222,9 +260,12 @@ fun ReviewScreen(
                                         containerColor = containerColor,
                                         contentColor = contentColor,
                                     ),
-                                    contentPadding = PaddingValues(horizontal = 3.dp, vertical = 9.dp),
+                                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 8.dp),
                                 ) {
-                                    Text(rating.name, style = MaterialTheme.typography.labelMedium)
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(rating.name, style = MaterialTheme.typography.labelMedium)
+                                        Text(intervalText, style = MaterialTheme.typography.labelSmall)
+                                    }
                                 }
                             }
                         }

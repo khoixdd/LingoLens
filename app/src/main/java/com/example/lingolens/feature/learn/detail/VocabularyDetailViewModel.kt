@@ -2,6 +2,7 @@ package com.example.lingolens.feature.learn.detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lingolens.core.common.TextToSpeechHelper
 import com.example.lingolens.domain.model.Vocabulary
 import com.example.lingolens.domain.repository.VocabularyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class VocabularyDetailViewModel @Inject constructor(
     private val repository: VocabularyRepository,
+    private val ttsHelper: TextToSpeechHelper,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(VocabularyDetailUiState())
@@ -53,6 +55,12 @@ class VocabularyDetailViewModel @Inject constructor(
 
     fun onAction(action: VocabularyDetailAction) {
         when (action) {
+            VocabularyDetailAction.PlayPronunciation -> {
+                val wordToPlay = _uiState.value.word
+                if (wordToPlay.isNotBlank()) {
+                    ttsHelper.speak(wordToPlay)
+                }
+            }
             VocabularyDetailAction.ToggleFavorite -> {
                 val id = _uiState.value.id
                 if (id.isNotBlank()) {
@@ -91,7 +99,12 @@ class VocabularyDetailViewModel @Inject constructor(
                     }
                 }
             }
-            VocabularyDetailAction.Back, VocabularyDetailAction.PlayPronunciation -> Unit
+            VocabularyDetailAction.Back -> Unit
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        ttsHelper.shutdown()
     }
 }
