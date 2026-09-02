@@ -6,5 +6,6 @@ sealed interface ReviewAction {
     data object Back : ReviewAction
     data object Reveal : ReviewAction
     data object PlayPronunciation : ReviewAction
+    data object StartReviewAll : ReviewAction
     data class Rate(val rating: ReviewRating) : ReviewAction
 }

@@ -19,6 +19,9 @@ interface VocabularyDao {
     @Query("SELECT * FROM vocabulary WHERE id = :id")
     suspend fun getById(id: String): VocabularyEntity?
 
+    @Query("SELECT * FROM vocabulary WHERE LOWER(word) = LOWER(:word) LIMIT 1")
+    suspend fun getByWordText(word: String): VocabularyEntity?
+
     @Query("SELECT COUNT(*) FROM vocabulary")
     suspend fun getCount(): Int
 

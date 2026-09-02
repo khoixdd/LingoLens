@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -76,16 +77,32 @@ fun ReviewScreen(
                 }
             }
             state.isEmpty -> {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(insets),
-                    contentAlignment = Alignment.Center,
+                        .padding(insets)
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                 ) {
                     EmptyState(
-                        title = "No words to review",
-                        message = "Add more words in your Notebook to start reviewing!",
+                        title = "No words due for review today",
+                        message = "You are all caught up! You can review all saved words anyway.",
                     )
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = { onAction(ReviewAction.StartReviewAll) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Review All Words")
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { onAction(ReviewAction.Back) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Back to Learn")
+                    }
                 }
             }
             state.isCompleted -> {

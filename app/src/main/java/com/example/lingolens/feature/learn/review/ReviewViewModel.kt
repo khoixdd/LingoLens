@@ -24,6 +24,7 @@ class ReviewViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ReviewUiState())
     val uiState: StateFlow<ReviewUiState> = _uiState.asStateFlow()
 
+    private var allVocabularyList: List<Vocabulary> = emptyList()
     private var reviewWords: List<Vocabulary> = emptyList()
 
     init {
@@ -33,13 +34,14 @@ class ReviewViewModel @Inject constructor(
     private fun loadReviewQueue() {
         viewModelScope.launch {
             repository.seedSampleDataIfEmpty()
-            val allWords = repository.getAllVocabulary().first()
+            allVocabularyList = repository.getAllVocabulary().first()
             val now = System.currentTimeMillis()
-            reviewWords = allWords.filter { word ->
-                word.nextReviewAt == null || word.nextReviewAt <= now
-            }.ifEmpty { allWords.take(15) }
 
-            if (reviewWords.isEmpty()) {
+            val dueWords = allVocabularyList.filter { word ->
+                word.nextReviewAt == null || word.nextReviewAt <= now
+            }
+
+            if (dueWords.isEmpty()) {
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -48,6 +50,7 @@ class ReviewViewModel @Inject constructor(
                     )
                 }
             } else {
+                reviewWords = dueWords
                 updateStateForCurrentIndex(0)
             }
         }
@@ -82,6 +85,12 @@ class ReviewViewModel @Inject constructor(
                 val currentWord = _uiState.value.word
                 if (currentWord.isNotBlank()) {
                     ttsHelper.speak(currentWord)
+                }
+            }
+            ReviewAction.StartReviewAll -> {
+                if (allVocabularyList.isNotEmpty()) {
+                    reviewWords = allVocabularyList
+                    updateStateForCurrentIndex(0)
                 }
             }
             is ReviewAction.Rate -> {

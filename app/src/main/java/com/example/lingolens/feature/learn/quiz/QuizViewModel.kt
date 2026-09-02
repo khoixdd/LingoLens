@@ -2,6 +2,7 @@ package com.example.lingolens.feature.learn.quiz
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lingolens.domain.model.MasteryLevel
 import com.example.lingolens.domain.model.Vocabulary
 import com.example.lingolens.domain.repository.VocabularyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -117,6 +118,12 @@ class QuizViewModel @Inject constructor(
                         target.copy(
                             correctCount = target.correctCount + 1,
                             lastReviewedAt = now,
+                            masteryLevel = when (target.masteryLevel) {
+                                MasteryLevel.New -> MasteryLevel.Learning
+                                MasteryLevel.Learning -> MasteryLevel.Familiar
+                                MasteryLevel.Familiar -> MasteryLevel.Mastered
+                                MasteryLevel.Mastered -> MasteryLevel.Mastered
+                            },
                         )
                     } else {
                         target.copy(

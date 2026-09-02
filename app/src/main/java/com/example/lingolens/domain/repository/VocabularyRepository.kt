@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.Flow
 interface VocabularyRepository {
     fun getAllVocabulary(): Flow<List<Vocabulary>>
     fun getVocabularyById(id: String): Flow<Vocabulary?>
+    suspend fun getWordByText(word: String): Vocabulary?
+    suspend fun isWordDuplicate(word: String): Boolean
     suspend fun addVocabulary(vocabulary: Vocabulary)
     suspend fun updateVocabulary(vocabulary: Vocabulary)
     suspend fun toggleFavorite(id: String)

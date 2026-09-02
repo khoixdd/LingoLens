@@ -32,6 +32,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -53,10 +54,30 @@ class FakeVocabularyRepository : VocabularyRepository {
 
     override fun getAllVocabulary(): Flow<List<Vocabulary>> = items
     override fun getVocabularyById(id: String): Flow<Vocabulary?> = items.map { list -> list.firstOrNull { it.id == id } }
-    override suspend fun addVocabulary(vocabulary: Vocabulary) { items.update { it + vocabulary } }
-    override suspend fun updateVocabulary(vocabulary: Vocabulary) { items.update { list -> list.map { if (it.id == vocabulary.id) vocabulary else it } } }
-    override suspend fun toggleFavorite(id: String) { items.update { list -> list.map { if (it.id == id) it.copy(isFavorite = !it.isFavorite) else it } } }
-    override suspend fun deleteVocabulary(id: String) { items.update { list -> list.filterNot { it.id == id } } }
+    override suspend fun getWordByText(word: String): Vocabulary? = items.value.firstOrNull { it.word.equals(word, ignoreCase = true) }
+    override suspend fun isWordDuplicate(word: String): Boolean = items.value.any { it.word.equals(word, ignoreCase = true) }
+
+    override suspend fun addVocabulary(vocabulary: Vocabulary) {
+        val existing = items.value.firstOrNull { it.word.equals(vocabulary.word, ignoreCase = true) }
+        if (existing != null) {
+            updateVocabulary(vocabulary.copy(id = existing.id))
+        } else {
+            items.update { it + vocabulary }
+        }
+    }
+
+    override suspend fun updateVocabulary(vocabulary: Vocabulary) {
+        items.update { list -> list.map { if (it.id == vocabulary.id) vocabulary else it } }
+    }
+
+    override suspend fun toggleFavorite(id: String) {
+        items.update { list -> list.map { if (it.id == id) it.copy(isFavorite = !it.isFavorite) else it } }
+    }
+
+    override suspend fun deleteVocabulary(id: String) {
+        items.update { list -> list.filterNot { it.id == id } }
+    }
+
     override suspend fun seedSampleDataIfEmpty() {}
 }
 
@@ -99,6 +120,32 @@ class FeatureViewModelTest {
 
         viewModel.onAction(ReviewAction.Rate(ReviewRating.Good))
         assertTrue(viewModel.uiState.value.isCompleted)
+
+        val updatedWord = repository.getWordByText("ubiquitous")
+        assertNotNull(updatedWord)
+        assertEquals(MasteryLevel.Familiar, updatedWord?.masteryLevel)
+        assertTrue((updatedWord?.nextReviewAt ?: 0) > System.currentTimeMillis())
+    }
+
+    @Test
+    fun duplicateWordPreventionUpdatesExistingWord() = runTest(testDispatcher) {
+        val repository = FakeVocabularyRepository()
+        assertTrue(repository.isWordDuplicate("UBIQUITOUS"))
+
+        val duplicateInput = Vocabulary(
+            id = "new_id",
+            word = "ubiquitous",
+            meaning = "phổ biến ở khắp mọi nơi",
+        )
+        repository.addVocabulary(duplicateInput)
+
+        val words = repository.getAllVocabulary()
+        var list: List<Vocabulary> = emptyList()
+        val job = backgroundScope.launch { words.collect { list = it } }
+
+        assertEquals(1, list.size)
+        assertEquals("phổ biến ở khắp mọi nơi", list.first().meaning)
+        job.cancel()
     }
 
     @Test
