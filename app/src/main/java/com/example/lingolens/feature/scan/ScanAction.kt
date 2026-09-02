@@ -6,4 +6,7 @@ sealed interface ScanAction {
     data object Capture : ScanAction
     data object OpenGallery : ScanAction
     data object DismissFeedback : ScanAction
+
+    data class TextDetected(val words: List<String>) : ScanAction
+    data class ErrorOccurred(val message: String) : ScanAction
 }
