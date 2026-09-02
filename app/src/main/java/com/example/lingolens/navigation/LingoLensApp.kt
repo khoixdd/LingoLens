@@ -1,9 +1,8 @@
 package com.example.lingolens.navigation
 
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Groups
@@ -18,6 +17,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -27,6 +27,8 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.example.lingolens.feature.auth.WelcomeScreen
+import com.example.lingolens.feature.auth.login.LoginRoute
+import com.example.lingolens.feature.auth.register.RegisterRoute
 import com.example.lingolens.feature.community.CommunityRoute
 import com.example.lingolens.feature.home.HomeRoute
 import com.example.lingolens.feature.learn.LearnRoute
@@ -168,7 +170,7 @@ fun LingoLensApp() {
                         onOpenMyWords = { backStack.add(Notebook) },
                         onOpenNotifications = { backStack.add(NotificationSettings) },
                         onOpenPrivacy = { backStack.add(PrivacySettings) },
-                        onLogout = { backStack.openRoot(Welcome) },
+                        onLogout = { backStack.openRoot(Login) },
                     )
                 }
                 entry<NotificationSettings> {
@@ -178,7 +180,19 @@ fun LingoLensApp() {
                     PrivacySettingsRoute(onBack = { backStack.removeLastOrNull() })
                 }
                 entry<Welcome> {
-                    WelcomeScreen(onContinue = { backStack.openRoot(Home) })
+                    WelcomeScreen(onContinue = { backStack.add(Login) })
+                }
+                entry<Login> {
+                    LoginRoute(
+                        onLoginSuccess = { backStack.openRoot(Home) },
+                        onNavigateToRegister = { backStack.add(Register) },
+                    )
+                }
+                entry<Register> {
+                    RegisterRoute(
+                        onRegisterSuccess = { backStack.openRoot(Home) },
+                        onNavigateToLogin = { backStack.removeLastOrNull() },
+                    )
                 }
             },
         )

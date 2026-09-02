@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -57,6 +58,10 @@ dependencies {
     implementation(libs.kotlinx.serialization.core)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.firebase.firestore.ktx)
+    implementation(libs.play.services.auth)
     ksp(libs.androidx.room.compiler)
     ksp(libs.hilt.android.compiler)
     testImplementation(libs.junit)
