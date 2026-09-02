@@ -17,13 +17,14 @@ class ScanViewModel @Inject constructor() : ViewModel() {
         when (action) {
             is ScanAction.ToggleFlash -> _uiState.update { it.copy(isFlashEnabled = !it.isFlashEnabled) }
             is ScanAction.Capture -> _uiState.update {
+                it.copy(isScanning = true)
                 it.copy(feedbackMessage = "Camera and text recognition are not connected yet.")
             }
             is ScanAction.OpenGallery -> _uiState.update {
-                it.copy(feedbackMessage = "Gallery import is coming in the next scan integration.")
+                it.copy(isScanning = false, feedbackMessage = "Gallery import is coming in the next scan integration.")
             }
-            is ScanAction.TextDetected -> _uiState.update { it.copy(extractedText = action.words) }
-            is ScanAction.ErrorOccurred -> _uiState.update { it.copy(feedbackMessage = action.message) }
+            is ScanAction.TextDetected -> _uiState.update { it.copy(isScanning = false, extractedText = action.words, feedbackMessage = "Found ${action.words.size} words!") }
+            is ScanAction.ErrorOccurred -> _uiState.update { it.copy(isScanning = false, feedbackMessage = action.message) }
             is ScanAction.DismissFeedback -> _uiState.update { it.copy(feedbackMessage = null) }
 
             is ScanAction.Close -> Unit

@@ -28,6 +28,7 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -189,16 +190,19 @@ fun ScanScreen(
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     Surface(
                         onClick = { 
-                            captureAndExtractText(
-                                imageCapture = imageCapture,
-                                context = context,
-                                onSuccess = { words -> 
-                                    onAction(ScanAction.TextDetected(words)) 
-                                },
-                                onError = { error -> 
-                                    onAction(ScanAction.ErrorOccurred(error.message ?: "Capture failed")) 
-                                }
-                            )
+                            if (!state.isScanning && hasCameraPermission) {
+                                onAction(ScanAction.Capture)
+                                captureAndExtractText(
+                                    imageCapture = imageCapture,
+                                    context = context,
+                                    onSuccess = { words -> 
+                                        onAction(ScanAction.TextDetected(words)) 
+                                    },
+                                    onError = { error -> 
+                                        onAction(ScanAction.ErrorOccurred(error.message ?: "Capture failed")) 
+                                    }
+                                )
+                            }
                         },
                         modifier = Modifier.size(76.dp),
                         shape = CircleShape,
@@ -207,12 +211,22 @@ fun ScanScreen(
                         shadowElevation = 8.dp,
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Outlined.CameraAlt,
-                                contentDescription = "Capture text",
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(30.dp),
-                            )
+                            if (state.isScanning) {
+                                // Show a loading spinner while ML Kit processes the image
+                                CircularProgressIndicator(
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(30.dp),
+                                    strokeWidth = 3.dp
+                                )
+                            } else {
+                                // Show the standard camera icon
+                                Icon(
+                                    Icons.Outlined.CameraAlt,
+                                    contentDescription = "Capture text",
+                                    tint = if (hasCameraPermission) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(30.dp),
+                                )
+                            }
                         }
                     }
                 }
