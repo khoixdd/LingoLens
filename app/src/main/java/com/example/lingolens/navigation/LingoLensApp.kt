@@ -16,6 +16,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -41,10 +42,15 @@ import com.example.lingolens.feature.profile.ProfileRoute
 import com.example.lingolens.feature.profile.notification.NotificationSettingsRoute
 import com.example.lingolens.feature.profile.privacy.PrivacySettingsRoute
 import com.example.lingolens.feature.scan.ScanRoute
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun LingoLensApp() {
-    val backStack = rememberNavBackStack(Home)
+    val initialDestination: LingoLensDestination = remember {
+        val currentUser = runCatching { FirebaseAuth.getInstance().currentUser }.getOrNull()
+        if (currentUser != null) Home else Login
+    }
+    val backStack = rememberNavBackStack(initialDestination)
     val current = backStack.lastOrNull()
     val showBottomBar = current == Home || current == Scan || current == Learn ||
         current == Community || current == Profile
@@ -174,7 +180,10 @@ fun LingoLensApp() {
                         onOpenMyWords = { backStack.add(Notebook) },
                         onOpenNotifications = { backStack.add(NotificationSettings) },
                         onOpenPrivacy = { backStack.add(PrivacySettings) },
-                        onLogout = { backStack.openRoot(Login) },
+                        onLogout = {
+                            runCatching { FirebaseAuth.getInstance().signOut() }
+                            backStack.openRoot(Login)
+                        },
                     )
                 }
                 entry<NotificationSettings> {

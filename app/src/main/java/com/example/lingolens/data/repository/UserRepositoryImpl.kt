@@ -12,10 +12,12 @@ import com.google.firebase.firestore.SetOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 @Singleton
 class UserRepositoryImpl @Inject constructor(
@@ -179,40 +181,22 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun syncUserProfileOnLogin(user: AuthUser) {
         val db = firestore ?: return
         if (user.uid.isBlank()) return
-        runCatching {
-            val docRef = db.collection("users").document(user.uid)
-            val snapshot = docRef.get().await()
-            val now = System.currentTimeMillis()
-            val defaultName = user.displayName.ifBlank { user.email.substringBefore("@") }.ifBlank { "Learner" }
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val docRef = db.collection("users").document(user.uid)
+                val now = System.currentTimeMillis()
+                val defaultName = user.displayName.ifBlank { user.email.substringBefore("@") }.ifBlank { "Learner" }
 
-            if (!snapshot.exists()) {
-                val newProfile = hashMapOf(
+                val updates = hashMapOf<String, Any>(
                     "uid" to user.uid,
                     "username" to defaultName,
                     "email" to user.email,
-                    "avatarUrl" to user.photoUrl,
-                    "xp" to 100,
-                    "level" to 1,
-                    "streakDays" to 1,
-                    "totalWords" to 0,
-                    "latitude" to 10.762622,
-                    "longitude" to 106.682221,
-                    "isSharingLocation" to false,
-                    "createdAt" to now,
                     "lastLoginAt" to now,
                 )
-                docRef.set(newProfile, SetOptions.merge()).await()
-            } else {
-                val updates = hashMapOf<String, Any>(
-                    "lastLoginAt" to now,
-                )
-                if (user.displayName.isNotBlank()) {
-                    updates["username"] = user.displayName
+                if (user.photoUrl.isNotBlank()) {
+                    updates["avatarUrl"] = user.photoUrl
                 }
-                if (user.email.isNotBlank()) {
-                    updates["email"] = user.email
-                }
-                docRef.set(updates, SetOptions.merge()).await()
+                docRef.set(updates, SetOptions.merge())
             }
         }
     }
@@ -220,28 +204,32 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun addXp(uid: String, xpAmount: Int) {
         val db = firestore ?: return
         if (uid.isBlank() || xpAmount <= 0) return
-        runCatching {
-            val docRef = db.collection("users").document(uid)
-            val snapshot = docRef.get().await()
-            val currentXp = if (snapshot.exists()) (snapshot.getLong("xp")?.toInt() ?: 100) else 100
-            val newXp = currentXp + xpAmount
-            val newLevel = (newXp / 200) + 1
-            val data = hashMapOf<String, Any>(
-                "uid" to uid,
-                "xp" to newXp,
-                "level" to newLevel,
-                "lastLoginAt" to System.currentTimeMillis(),
-            )
-            docRef.set(data, SetOptions.merge()).await()
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val docRef = db.collection("users").document(uid)
+                val snapshot = docRef.get().await()
+                val currentXp = if (snapshot.exists()) (snapshot.getLong("xp")?.toInt() ?: 100) else 100
+                val newXp = currentXp + xpAmount
+                val newLevel = (newXp / 200) + 1
+                val data = hashMapOf<String, Any>(
+                    "uid" to uid,
+                    "xp" to newXp,
+                    "level" to newLevel,
+                    "lastLoginAt" to System.currentTimeMillis(),
+                )
+                docRef.set(data, SetOptions.merge())
+            }
         }
     }
 
     override suspend fun syncTotalWords(uid: String, totalWords: Int) {
         val db = firestore ?: return
         if (uid.isBlank()) return
-        runCatching {
-            val docRef = db.collection("users").document(uid)
-            docRef.set(mapOf("totalWords" to totalWords), SetOptions.merge()).await()
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val docRef = db.collection("users").document(uid)
+                docRef.set(mapOf("totalWords" to totalWords), SetOptions.merge())
+            }
         }
     }
 
@@ -253,16 +241,18 @@ class UserRepositoryImpl @Inject constructor(
     ) {
         val db = firestore ?: return
         if (uid.isBlank()) return
-        runCatching {
-            val docRef = db.collection("users").document(uid)
-            docRef.set(
-                mapOf(
-                    "latitude" to lat,
-                    "longitude" to lng,
-                    "isSharingLocation" to isSharing,
-                ),
-                SetOptions.merge(),
-            ).await()
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val docRef = db.collection("users").document(uid)
+                docRef.set(
+                    mapOf(
+                        "latitude" to lat,
+                        "longitude" to lng,
+                        "isSharingLocation" to isSharing,
+                    ),
+                    SetOptions.merge(),
+                )
+            }
         }
     }
 
