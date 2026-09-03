@@ -28,6 +28,17 @@ class ProfileViewModel @Inject constructor(
 
     private val logoutState = MutableStateFlow(false)
 
+    init {
+        viewModelScope.launch {
+            vocabularyRepository.getAllVocabulary().collect { allWords ->
+                val currentUser = authRepository.getCurrentUser()
+                if (currentUser != null) {
+                    userRepository.syncTotalWords(currentUser.uid, allWords.size)
+                }
+            }
+        }
+    }
+
     val uiState: StateFlow<ProfileUiState> = combine(
         authRepository.observeAuthState().flatMapLatest { authUser ->
             if (authUser != null) {

@@ -20,11 +20,10 @@ data class CommunityUiState(
 )
 
 val sampleWeeklyLeaderboard = listOf(
-    LeaderboardEntry(1, "Minh", 12, 2480, 21),
-    LeaderboardEntry(2, "An", 10, 2210, 18),
-    LeaderboardEntry(3, "Khoi", 9, 1980, 16),
-    LeaderboardEntry(4, "Alex", 7, 1560, 12, isCurrentUser = true),
-    LeaderboardEntry(5, "Lan", 6, 1340, 9),
+    LeaderboardEntry(1, "User A", 11, 2100, 15),
+    LeaderboardEntry(2, "User B", 10, 1850, 12),
+    LeaderboardEntry(3, "User C", 9, 1700, 9),
+    LeaderboardEntry(4, "Learner", 1, 100, 1, isCurrentUser = true),
 )
 
 val sampleAllTimeLeaderboard = sampleWeeklyLeaderboard.map { entry ->

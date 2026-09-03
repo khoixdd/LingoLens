@@ -6,6 +6,8 @@ import com.example.lingolens.domain.model.MasteryLevel
 import com.example.lingolens.domain.model.UserProfile
 import com.example.lingolens.domain.model.Vocabulary
 import com.example.lingolens.domain.repository.AuthRepository
+import com.example.lingolens.domain.repository.LocationRepository
+import com.example.lingolens.domain.repository.UserLocation
 import com.example.lingolens.domain.repository.UserRepository
 import com.example.lingolens.domain.repository.VocabularyRepository
 import com.example.lingolens.feature.community.CommunityAction
@@ -110,6 +112,8 @@ class FakeUserRepository : UserRepository {
     )
 
     override fun observeUserProfile(uid: String): Flow<UserProfile?> = profileFlow
+    override fun observeLeaderboard(): Flow<List<UserProfile>> = profileFlow.map { listOfNotNull(it) }
+    override fun observeNearbyLearners(): Flow<List<UserProfile>> = profileFlow.map { listOfNotNull(it) }
     override suspend fun getUserProfile(uid: String): UserProfile? = profileFlow.value
     override suspend fun syncUserProfileOnLogin(user: AuthUser) {}
     override suspend fun addXp(uid: String, xpAmount: Int) {
@@ -120,6 +124,17 @@ class FakeUserRepository : UserRepository {
             )
         }
     }
+    override suspend fun syncTotalWords(uid: String, totalWords: Int) {
+        profileFlow.update { it?.copy(totalWords = totalWords) }
+    }
+    override suspend fun updateUserLocation(uid: String, lat: Double, lng: Double, isSharing: Boolean) {
+        profileFlow.update { it?.copy(latitude = lat, longitude = lng, isSharingLocation = isSharing) }
+    }
+}
+
+class FakeLocationRepository : LocationRepository {
+    override suspend fun getCurrentLocation(): UserLocation = UserLocation(10.762622, 106.682221)
+    override fun hasLocationPermission(): Boolean = true
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -129,6 +144,7 @@ class FeatureViewModelTest {
     private val ttsHelper = mock(TextToSpeechHelper::class.java)
     private val authRepository: AuthRepository = FakeAuthRepository()
     private val userRepository: UserRepository = FakeUserRepository()
+    private val locationRepository: LocationRepository = FakeLocationRepository()
 
     @Before
     fun setUp() {
@@ -271,9 +287,9 @@ class FeatureViewModelTest {
 
     @Test
     fun privacyToggleUpdatesLocalStateWithoutRequestingPermission() {
-        val viewModel = PrivacySettingsViewModel()
+        val viewModel = PrivacySettingsViewModel(locationRepository, authRepository, userRepository)
         viewModel.onAction(PrivacySettingsAction.ShareLocationChanged(true))
         assertTrue(viewModel.uiState.value.shareLocation)
-        assertEquals("Required", viewModel.uiState.value.locationPermission)
+        assertEquals("Granted", viewModel.uiState.value.locationPermission)
     }
 }

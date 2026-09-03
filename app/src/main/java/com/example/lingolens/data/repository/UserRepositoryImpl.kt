@@ -5,7 +5,9 @@ import com.example.lingolens.domain.model.AuthUser
 import com.example.lingolens.domain.model.UserProfile
 import com.example.lingolens.domain.repository.UserRepository
 import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -31,6 +33,14 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
+    private val auth: FirebaseAuth? by lazy {
+        try {
+            FirebaseAuth.getInstance()
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     override fun observeUserProfile(uid: String): Flow<UserProfile?> = callbackFlow {
         val db = firestore
         if (db == null || uid.isBlank()) {
@@ -45,19 +55,110 @@ class UserRepositoryImpl @Inject constructor(
                     trySend(null)
                     return@addSnapshotListener
                 }
-                val profile = UserProfile(
-                    uid = snapshot.getString("uid").orEmpty().ifBlank { uid },
-                    username = snapshot.getString("username").orEmpty().ifBlank { "Learner" },
-                    email = snapshot.getString("email").orEmpty(),
-                    avatarUrl = snapshot.getString("avatarUrl").orEmpty(),
-                    xp = snapshot.getLong("xp")?.toInt() ?: 100,
-                    level = snapshot.getLong("level")?.toInt() ?: 1,
-                    streakDays = snapshot.getLong("streakDays")?.toInt() ?: 1,
-                    totalWords = snapshot.getLong("totalWords")?.toInt() ?: 0,
-                    createdAt = snapshot.getLong("createdAt") ?: System.currentTimeMillis(),
-                    lastLoginAt = snapshot.getLong("lastLoginAt") ?: System.currentTimeMillis(),
-                )
-                trySend(profile)
+                trySend(mapDocumentToUserProfile(snapshot.id, snapshot.data.orEmpty()))
+            }
+
+        awaitClose { listener.remove() }
+    }
+
+    override fun observeLeaderboard(): Flow<List<UserProfile>> = callbackFlow {
+        val db = firestore
+        if (db == null) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+
+        seedSampleLeaderboardIfEmpty(db)
+
+        val listener = db.collection("users")
+            .orderBy("xp", Query.Direction.DESCENDING)
+            .limit(10)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) {
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
+                val list = snapshot.documents.map { doc ->
+                    mapDocumentToUserProfile(doc.id, doc.data.orEmpty())
+                }
+                trySend(list)
+            }
+
+        awaitClose { listener.remove() }
+    }
+
+    private fun seedSampleLeaderboardIfEmpty(db: FirebaseFirestore) {
+        runCatching {
+            db.collection("users").limit(3).get().addOnSuccessListener { snapshot ->
+                if (snapshot == null || snapshot.isEmpty) {
+                    val samples = listOf(
+                        hashMapOf(
+                            "uid" to "sample_user_a",
+                            "username" to "User A",
+                            "email" to "usera@example.com",
+                            "xp" to 2100,
+                            "level" to 11,
+                            "streakDays" to 15,
+                            "latitude" to 10.765100,
+                            "longitude" to 106.685000,
+                            "isSharingLocation" to true,
+                            "createdAt" to System.currentTimeMillis(),
+                        ),
+                        hashMapOf(
+                            "uid" to "sample_user_b",
+                            "username" to "User B",
+                            "email" to "userb@example.com",
+                            "xp" to 1850,
+                            "level" to 10,
+                            "streakDays" to 12,
+                            "latitude" to 10.760000,
+                            "longitude" to 106.680000,
+                            "isSharingLocation" to true,
+                            "createdAt" to System.currentTimeMillis(),
+                        ),
+                        hashMapOf(
+                            "uid" to "sample_user_c",
+                            "username" to "User C",
+                            "email" to "userc@example.com",
+                            "xp" to 1700,
+                            "level" to 9,
+                            "streakDays" to 9,
+                            "latitude" to 10.763000,
+                            "longitude" to 106.683000,
+                            "isSharingLocation" to true,
+                            "createdAt" to System.currentTimeMillis(),
+                        ),
+                    )
+                    samples.forEach { item ->
+                        db.collection("users").document(item["uid"] as String)
+                            .set(item, SetOptions.merge())
+                    }
+                }
+            }
+        }
+    }
+
+    override fun observeNearbyLearners(): Flow<List<UserProfile>> = callbackFlow {
+        val db = firestore
+        if (db == null) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+
+        val listener = db.collection("users")
+            .whereEqualTo("isSharingLocation", true)
+            .limit(20)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) {
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
+                val list = snapshot.documents.map { doc ->
+                    mapDocumentToUserProfile(doc.id, doc.data.orEmpty())
+                }
+                trySend(list)
             }
 
         awaitClose { listener.remove() }
@@ -69,18 +170,7 @@ class UserRepositoryImpl @Inject constructor(
         return try {
             val snapshot = db.collection("users").document(uid).get().await()
             if (!snapshot.exists()) return null
-            UserProfile(
-                uid = snapshot.getString("uid").orEmpty().ifBlank { uid },
-                username = snapshot.getString("username").orEmpty().ifBlank { "Learner" },
-                email = snapshot.getString("email").orEmpty(),
-                avatarUrl = snapshot.getString("avatarUrl").orEmpty(),
-                xp = snapshot.getLong("xp")?.toInt() ?: 100,
-                level = snapshot.getLong("level")?.toInt() ?: 1,
-                streakDays = snapshot.getLong("streakDays")?.toInt() ?: 1,
-                totalWords = snapshot.getLong("totalWords")?.toInt() ?: 0,
-                createdAt = snapshot.getLong("createdAt") ?: System.currentTimeMillis(),
-                lastLoginAt = snapshot.getLong("lastLoginAt") ?: System.currentTimeMillis(),
-            )
+            mapDocumentToUserProfile(snapshot.id, snapshot.data.orEmpty())
         } catch (_: Exception) {
             null
         }
@@ -93,17 +183,21 @@ class UserRepositoryImpl @Inject constructor(
             val docRef = db.collection("users").document(user.uid)
             val snapshot = docRef.get().await()
             val now = System.currentTimeMillis()
+            val defaultName = user.displayName.ifBlank { user.email.substringBefore("@") }.ifBlank { "Learner" }
 
             if (!snapshot.exists()) {
                 val newProfile = hashMapOf(
                     "uid" to user.uid,
-                    "username" to user.displayName.ifBlank { "Learner" },
+                    "username" to defaultName,
                     "email" to user.email,
                     "avatarUrl" to user.photoUrl,
                     "xp" to 100,
                     "level" to 1,
                     "streakDays" to 1,
                     "totalWords" to 0,
+                    "latitude" to 10.762622,
+                    "longitude" to 106.682221,
+                    "isSharingLocation" to false,
                     "createdAt" to now,
                     "lastLoginAt" to now,
                 )
@@ -140,5 +234,57 @@ class UserRepositoryImpl @Inject constructor(
             )
             docRef.set(data, SetOptions.merge()).await()
         }
+    }
+
+    override suspend fun syncTotalWords(uid: String, totalWords: Int) {
+        val db = firestore ?: return
+        if (uid.isBlank()) return
+        runCatching {
+            val docRef = db.collection("users").document(uid)
+            docRef.set(mapOf("totalWords" to totalWords), SetOptions.merge()).await()
+        }
+    }
+
+    override suspend fun updateUserLocation(
+        uid: String,
+        lat: Double,
+        lng: Double,
+        isSharing: Boolean,
+    ) {
+        val db = firestore ?: return
+        if (uid.isBlank()) return
+        runCatching {
+            val docRef = db.collection("users").document(uid)
+            docRef.set(
+                mapOf(
+                    "latitude" to lat,
+                    "longitude" to lng,
+                    "isSharingLocation" to isSharing,
+                ),
+                SetOptions.merge(),
+            ).await()
+        }
+    }
+
+    private fun mapDocumentToUserProfile(docId: String, data: Map<String, Any>): UserProfile {
+        val currentUser = auth?.currentUser
+        val emailPrefix = currentUser?.email?.substringBefore("@").orEmpty()
+        val defaultName = currentUser?.displayName.orEmpty().ifBlank { emailPrefix }.ifBlank { "Learner" }
+
+        return UserProfile(
+            uid = (data["uid"] as? String).orEmpty().ifBlank { docId },
+            username = (data["username"] as? String).orEmpty().ifBlank { defaultName },
+            email = (data["email"] as? String).orEmpty().ifBlank { currentUser?.email.orEmpty() },
+            avatarUrl = (data["avatarUrl"] as? String).orEmpty(),
+            xp = (data["xp"] as? Long)?.toInt() ?: 100,
+            level = (data["level"] as? Long)?.toInt() ?: 1,
+            streakDays = (data["streakDays"] as? Long)?.toInt() ?: 1,
+            totalWords = (data["totalWords"] as? Long)?.toInt() ?: 0,
+            latitude = (data["latitude"] as? Double) ?: 10.762622,
+            longitude = (data["longitude"] as? Double) ?: 106.682221,
+            isSharingLocation = (data["isSharingLocation"] as? Boolean) ?: false,
+            createdAt = (data["createdAt"] as? Long) ?: System.currentTimeMillis(),
+            lastLoginAt = (data["lastLoginAt"] as? Long) ?: System.currentTimeMillis(),
+        )
     }
 }

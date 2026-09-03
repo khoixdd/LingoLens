@@ -33,9 +33,11 @@ class AuthRepositoryImpl @Inject constructor(
 
     override fun getCurrentUser(): AuthUser? {
         val user = auth?.currentUser ?: return null
+        val emailPrefix = user.email?.substringBefore("@").orEmpty()
+        val displayName = user.displayName.orEmpty().ifBlank { emailPrefix }.ifBlank { "Learner" }
         return AuthUser(
             uid = user.uid,
-            displayName = user.displayName.orEmpty().ifBlank { user.email?.substringBefore("@").orEmpty() },
+            displayName = displayName,
             email = user.email.orEmpty(),
             photoUrl = user.photoUrl?.toString().orEmpty(),
         )
@@ -52,10 +54,12 @@ class AuthRepositoryImpl @Inject constructor(
         val listener = FirebaseAuth.AuthStateListener { firebase ->
             val user = firebase.currentUser
             if (user != null) {
+                val emailPrefix = user.email?.substringBefore("@").orEmpty()
+                val displayName = user.displayName.orEmpty().ifBlank { emailPrefix }.ifBlank { "Learner" }
                 trySend(
                     AuthUser(
                         uid = user.uid,
-                        displayName = user.displayName.orEmpty().ifBlank { user.email?.substringBefore("@").orEmpty() },
+                        displayName = displayName,
                         email = user.email.orEmpty(),
                         photoUrl = user.photoUrl?.toString().orEmpty(),
                     ),
@@ -73,10 +77,12 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val result = firebaseAuth.signInWithEmailAndPassword(email.trim(), password).await()
             val user = result.user ?: return Result.failure(IllegalStateException("User is null after sign in"))
+            val emailPrefix = user.email?.substringBefore("@").orEmpty()
+            val displayName = user.displayName.orEmpty().ifBlank { emailPrefix }.ifBlank { "Learner" }
             Result.success(
                 AuthUser(
                     uid = user.uid,
-                    displayName = user.displayName.orEmpty().ifBlank { user.email?.substringBefore("@").orEmpty() },
+                    displayName = displayName,
                     email = user.email.orEmpty(),
                     photoUrl = user.photoUrl?.toString().orEmpty(),
                 ),
@@ -96,9 +102,10 @@ class AuthRepositoryImpl @Inject constructor(
             val result = firebaseAuth.createUserWithEmailAndPassword(email.trim(), password).await()
             val user = result.user ?: return Result.failure(IllegalStateException("User is null after registration"))
 
-            if (username.isNotBlank()) {
+            val finalUsername = username.ifBlank { email.substringBefore("@") }
+            if (finalUsername.isNotBlank()) {
                 val profileUpdate = UserProfileChangeRequest.Builder()
-                    .setDisplayName(username.trim())
+                    .setDisplayName(finalUsername.trim())
                     .build()
                 runCatching { user.updateProfile(profileUpdate).await() }
             }
@@ -106,7 +113,7 @@ class AuthRepositoryImpl @Inject constructor(
             Result.success(
                 AuthUser(
                     uid = user.uid,
-                    displayName = username.ifBlank { user.email?.substringBefore("@").orEmpty() },
+                    displayName = finalUsername,
                     email = user.email.orEmpty(),
                     photoUrl = user.photoUrl?.toString().orEmpty(),
                 ),
@@ -122,10 +129,12 @@ class AuthRepositoryImpl @Inject constructor(
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             val result = firebaseAuth.signInWithCredential(credential).await()
             val user = result.user ?: return Result.failure(IllegalStateException("User is null after Google sign in"))
+            val emailPrefix = user.email?.substringBefore("@").orEmpty()
+            val displayName = user.displayName.orEmpty().ifBlank { emailPrefix }.ifBlank { "Learner" }
             Result.success(
                 AuthUser(
                     uid = user.uid,
-                    displayName = user.displayName.orEmpty().ifBlank { user.email?.substringBefore("@").orEmpty() },
+                    displayName = displayName,
                     email = user.email.orEmpty(),
                     photoUrl = user.photoUrl?.toString().orEmpty(),
                 ),

@@ -2,6 +2,7 @@ package com.example.lingolens.feature.community
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lingolens.domain.model.UserProfile
 import com.example.lingolens.domain.repository.AuthRepository
 import com.example.lingolens.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,39 +33,63 @@ class CommunityViewModel @Inject constructor(
                 flowOf(null)
             }
         },
+        userRepository.observeLeaderboard(),
         selectedPeriod,
-    ) { userProfile, period ->
+    ) { userProfile: UserProfile?, firestoreLeaderboard: List<UserProfile>, period ->
         val authUser = authRepository.getCurrentUser()
+        val currentUid = authUser?.uid.orEmpty()
+        val emailPrefix = authUser?.email?.substringBefore("@").orEmpty()
         val currentName = userProfile?.username.orEmpty()
             .ifBlank { authUser?.displayName.orEmpty() }
+            .ifBlank { emailPrefix }
             .ifBlank { "Learner" }
+
         val currentXp = userProfile?.xp ?: 100
         val currentLevel = userProfile?.level ?: 1
         val currentStreak = userProfile?.streakDays ?: 1
 
-        val currentUserEntry = LeaderboardEntry(
-            rank = 4,
-            name = currentName,
-            level = currentLevel,
-            xp = if (period == LeaderboardPeriod.ThisWeek) currentXp else currentXp * 8,
-            streakDays = currentStreak,
-            isCurrentUser = true,
+        val sampleBaseUsers = listOf(
+            UserProfile(uid = "sample_1", username = "User A", xp = 2100, level = 11, streakDays = 15),
+            UserProfile(uid = "sample_2", username = "User B", xp = 1850, level = 10, streakDays = 12),
+            UserProfile(uid = "sample_3", username = "User C", xp = 1700, level = 9, streakDays = 9),
         )
 
-        val rawList = listOf(
-            LeaderboardEntry(1, "Minh", 12, if (period == LeaderboardPeriod.ThisWeek) 2480 else 19840, 21),
-            LeaderboardEntry(2, "An", 10, if (period == LeaderboardPeriod.ThisWeek) 2210 else 17680, 18),
-            LeaderboardEntry(3, "Khoi", 9, if (period == LeaderboardPeriod.ThisWeek) 1980 else 15840, 16),
-            currentUserEntry,
-            LeaderboardEntry(5, "Lan", 6, if (period == LeaderboardPeriod.ThisWeek) 1340 else 10720, 9),
-        )
+        val mergedProfilesMap = mutableMapOf<String, UserProfile>()
+        sampleBaseUsers.forEach { mergedProfilesMap[it.uid] = it }
+        firestoreLeaderboard.forEach { mergedProfilesMap[it.uid] = it }
 
-        val sortedList = rawList.sortedByDescending { it.xp }
-            .mapIndexed { index, entry -> entry.copy(rank = index + 1) }
+        if (currentUid.isNotBlank()) {
+            val activeProfile = UserProfile(
+                uid = currentUid,
+                username = currentName,
+                email = userProfile?.email.orEmpty().ifBlank { authUser?.email.orEmpty() },
+                avatarUrl = userProfile?.avatarUrl.orEmpty(),
+                xp = currentXp,
+                level = currentLevel,
+                streakDays = currentStreak,
+            )
+            mergedProfilesMap[currentUid] = activeProfile
+        }
+
+        val sortedEntries = mergedProfilesMap.values
+            .sortedByDescending { it.xp }
+            .mapIndexed { index, profile ->
+                val isCurrent = (currentUid.isNotBlank() && profile.uid == currentUid) ||
+                    (currentName.isNotBlank() && profile.username.equals(currentName, ignoreCase = true) && !profile.uid.startsWith("sample_"))
+                val finalXp = if (period == LeaderboardPeriod.ThisWeek) profile.xp else profile.xp * 8
+                LeaderboardEntry(
+                    rank = index + 1,
+                    name = if (isCurrent) currentName else profile.username,
+                    level = profile.level,
+                    xp = finalXp,
+                    streakDays = profile.streakDays,
+                    isCurrentUser = isCurrent,
+                )
+            }
 
         CommunityUiState(
             selectedPeriod = period,
-            leaderboard = sortedList,
+            leaderboard = sortedEntries,
         )
     }.stateIn(
         scope = viewModelScope,

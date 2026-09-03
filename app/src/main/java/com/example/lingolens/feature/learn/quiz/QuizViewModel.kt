@@ -146,7 +146,7 @@ class QuizViewModel @Inject constructor(
                 val nextIndex = state.questionIndex + 1
 
                 if (nextIndex >= state.totalQuestions) {
-                    val earnedXp = earnedScore * 10
+                    val earnedXp = (earnedScore * 10) + 20 // Award +20 XP base completion bonus + 10 XP per correct answer
                     val currentUser = authRepository.getCurrentUser()
                     if (currentUser != null && earnedXp > 0) {
                         viewModelScope.launch {
