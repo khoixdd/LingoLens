@@ -127,7 +127,7 @@ fun LingoLensApp() {
                     )
                 }
                 entry<Scan> {
-                    ScanRoute(onClose = { backStack.openRoot(Home) })
+                    ScanRoute(onClose = { backStack.openRoot(Home) }, openLearning = { backStack.openRoot(Learn) })
                 }
                 entry<Learn> {
                     LearnRoute(
