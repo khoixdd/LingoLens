@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lingolens.domain.model.MasteryLevel
 import com.example.lingolens.domain.model.Vocabulary
+import com.example.lingolens.domain.repository.AuthRepository
+import com.example.lingolens.domain.repository.UserRepository
 import com.example.lingolens.domain.repository.VocabularyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -17,6 +19,8 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class QuizViewModel @Inject constructor(
     private val repository: VocabularyRepository,
+    private val authRepository: AuthRepository,
+    private val userRepository: UserRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QuizUiState())
@@ -142,6 +146,13 @@ class QuizViewModel @Inject constructor(
                 val nextIndex = state.questionIndex + 1
 
                 if (nextIndex >= state.totalQuestions) {
+                    val earnedXp = earnedScore * 10
+                    val currentUser = authRepository.getCurrentUser()
+                    if (currentUser != null && earnedXp > 0) {
+                        viewModelScope.launch {
+                            userRepository.addXp(currentUser.uid, earnedXp)
+                        }
+                    }
                     return QuizCompletion(earnedScore, state.totalQuestions)
                 }
 

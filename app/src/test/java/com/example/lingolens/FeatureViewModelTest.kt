@@ -1,9 +1,17 @@
 package com.example.lingolens
 
 import com.example.lingolens.core.common.TextToSpeechHelper
+import com.example.lingolens.domain.model.AuthUser
 import com.example.lingolens.domain.model.MasteryLevel
+import com.example.lingolens.domain.model.UserProfile
 import com.example.lingolens.domain.model.Vocabulary
+import com.example.lingolens.domain.repository.AuthRepository
+import com.example.lingolens.domain.repository.UserRepository
 import com.example.lingolens.domain.repository.VocabularyRepository
+import com.example.lingolens.feature.community.CommunityAction
+import com.example.lingolens.feature.community.CommunityViewModel
+import com.example.lingolens.feature.community.LeaderboardPeriod
+import com.example.lingolens.feature.home.HomeViewModel
 import com.example.lingolens.feature.learn.notebook.NotebookAction
 import com.example.lingolens.feature.learn.notebook.NotebookContentState
 import com.example.lingolens.feature.learn.notebook.NotebookViewModel
@@ -18,6 +26,8 @@ import com.example.lingolens.feature.profile.notification.NotificationSettingsAc
 import com.example.lingolens.feature.profile.notification.NotificationSettingsViewModel
 import com.example.lingolens.feature.profile.privacy.PrivacySettingsAction
 import com.example.lingolens.feature.profile.privacy.PrivacySettingsViewModel
+import com.example.lingolens.feature.scan.ScanAction
+import com.example.lingolens.feature.scan.ScanViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -81,11 +91,44 @@ class FakeVocabularyRepository : VocabularyRepository {
     override suspend fun seedSampleDataIfEmpty() {}
 }
 
+class FakeAuthRepository : AuthRepository {
+    private val userFlow = MutableStateFlow<AuthUser?>(
+        AuthUser("uid_1", "Alex", "alex@example.com"),
+    )
+
+    override fun getCurrentUser(): AuthUser? = userFlow.value
+    override fun observeAuthState(): Flow<AuthUser?> = userFlow
+    override suspend fun loginWithEmail(email: String, password: String): Result<AuthUser> = Result.success(userFlow.value!!)
+    override suspend fun registerWithEmail(username: String, email: String, password: String): Result<AuthUser> = Result.success(userFlow.value!!)
+    override suspend fun loginWithGoogle(idToken: String): Result<AuthUser> = Result.success(userFlow.value!!)
+    override suspend fun logout() { userFlow.value = null }
+}
+
+class FakeUserRepository : UserRepository {
+    private val profileFlow = MutableStateFlow<UserProfile?>(
+        UserProfile("uid_1", "Alex", "alex@example.com", level = 7, streakDays = 12, xp = 1560),
+    )
+
+    override fun observeUserProfile(uid: String): Flow<UserProfile?> = profileFlow
+    override suspend fun getUserProfile(uid: String): UserProfile? = profileFlow.value
+    override suspend fun syncUserProfileOnLogin(user: AuthUser) {}
+    override suspend fun addXp(uid: String, xpAmount: Int) {
+        profileFlow.update {
+            it?.copy(
+                xp = it.xp + xpAmount,
+                level = (it.xp + xpAmount) / 200 + 1,
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class FeatureViewModelTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
     private val ttsHelper = mock(TextToSpeechHelper::class.java)
+    private val authRepository = FakeAuthRepository()
+    private val userRepository = FakeUserRepository()
 
     @Before
     fun setUp() {
@@ -95,6 +138,43 @@ class FeatureViewModelTest {
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun homeViewModelExposesLiveStatsFromRepositories() = runTest(testDispatcher) {
+        val repository = FakeVocabularyRepository()
+        val viewModel = HomeViewModel(authRepository, userRepository, repository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        assertEquals("Alex", viewModel.uiState.value.name)
+        assertEquals(12, viewModel.uiState.value.streakDays)
+        assertEquals(7, viewModel.uiState.value.level)
+        assertEquals(1, viewModel.uiState.value.reviewWordsDue)
+    }
+
+    @Test
+    fun communityViewModelExposesLeaderboardState() = runTest(testDispatcher) {
+        val viewModel = CommunityViewModel(authRepository, userRepository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        assertEquals(LeaderboardPeriod.ThisWeek, viewModel.uiState.value.selectedPeriod)
+        assertEquals("Alex", viewModel.uiState.value.leaderboard.first { it.isCurrentUser }.name)
+
+        viewModel.onAction(CommunityAction.SelectPeriod(LeaderboardPeriod.AllTime))
+        assertEquals(LeaderboardPeriod.AllTime, viewModel.uiState.value.selectedPeriod)
+    }
+
+    @Test
+    fun scanInteractionsOnlyUpdateLocalPlaceholderState() {
+        val viewModel = ScanViewModel()
+        viewModel.onAction(ScanAction.ToggleFlash)
+        assertTrue(viewModel.uiState.value.isFlashEnabled)
+
+        viewModel.onAction(ScanAction.Capture)
+        assertNotNull(viewModel.uiState.value.feedbackMessage)
+
+        viewModel.onAction(ScanAction.DismissFeedback)
+        assertFalse(viewModel.uiState.value.feedbackMessage != null)
     }
 
     @Test
@@ -151,7 +231,7 @@ class FeatureViewModelTest {
     @Test
     fun quizShowsCorrectFeedbackBeforeMovingNext() = runTest(testDispatcher) {
         val repository = FakeVocabularyRepository()
-        val viewModel = QuizViewModel(repository)
+        val viewModel = QuizViewModel(repository, authRepository, userRepository)
 
         val correctIdx = viewModel.uiState.value.correctIndex
         viewModel.onAction(QuizAction.SelectAnswer(correctIdx))
