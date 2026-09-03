@@ -11,10 +11,11 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
-
+import android.util.Log
 @Singleton
 class VocabularyRepositoryImpl @Inject constructor(
     private val dao: VocabularyDao,
+    private val wordFetcher: WordFetcher,
 ) : VocabularyRepository {
 
     override fun getAllVocabulary(): Flow<List<Vocabulary>> {
@@ -39,17 +40,43 @@ class VocabularyRepositoryImpl @Inject constructor(
 
     override suspend fun addVocabulary(vocabulary: Vocabulary) {
         runCatching {
-            val existing = dao.getByWordText(vocabulary.word.trim())
+            val wordText = vocabulary.word.trim()
+            val existing = dao.getByWordText(wordText)
+
+            var finalVocabulary = vocabulary
+
+            Log.d("API_TEST", "Word 1: ${vocabulary.word}, Meaning: ${vocabulary.meaning}")
+
+            // Fetch from API if meaning is missing
+            if (finalVocabulary.meaning.isBlank()) {
+                val fetchedVocabulary = wordFetcher.getVocabulary(wordText)
+                
+                if (fetchedVocabulary != null) {
+                    // Update our local variable
+                    finalVocabulary = finalVocabulary.copy(
+                        meaning = fetchedVocabulary.meaning,
+                        pronunciation = fetchedVocabulary.pronunciation,
+                        partOfSpeech = fetchedVocabulary.partOfSpeech,
+                        example = fetchedVocabulary.example,
+                    )
+                }
+            }
+            
+            Log.d("API_TEST", "Word 2: ${finalVocabulary.word}, Meaning: ${finalVocabulary.meaning}")
             if (existing != null) {
-                val updatedEntity = vocabulary.copy(
+                val updatedEntity = finalVocabulary.copy(
                     id = existing.id,
                     createdAt = existing.createdAt,
-                    masteryLevel = try { MasteryLevel.valueOf(existing.masteryLevel) } catch (_: Exception) { vocabulary.masteryLevel },
-                    isFavorite = existing.isFavorite || vocabulary.isFavorite,
+                    masteryLevel = try { 
+                        MasteryLevel.valueOf(existing.masteryLevel) 
+                    } catch (_: Exception) { 
+                        finalVocabulary.masteryLevel 
+                    },
+                    isFavorite = existing.isFavorite || finalVocabulary.isFavorite,
                 ).toEntity()
                 dao.update(updatedEntity)
             } else {
-                dao.insert(vocabulary.toEntity())
+                dao.insert(finalVocabulary.toEntity())
             }
         }
     }
