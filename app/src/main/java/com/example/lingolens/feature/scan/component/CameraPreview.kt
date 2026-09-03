@@ -19,7 +19,7 @@ import androidx.camera.core.ImageCapture
 fun CameraPreview(
     imageCapture: ImageCapture,
     isFlashEnabled: Boolean,
-    onTextDetected: (List<String>) -> Unit,
+    // onTextDetected: (List<String>) -> Unit,
     onError: (Exception) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -43,16 +43,16 @@ fun CameraPreview(
                     it.setSurfaceProvider(previewView.surfaceProvider)
                 }
 
-                // Set up the ML Kit Analyzer
-                val imageAnalyzer = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                    .also {
-                        it.setAnalyzer(
-                            cameraExecutor,
-                            TextRecognitionAnalyzer(onTextDetected, onError)
-                        )
-                    }
+                // // Set up the ML Kit Analyzer
+                // val imageAnalyzer = ImageAnalysis.Builder()
+                //     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                //     .build()
+                //     .also {
+                //         it.setAnalyzer(
+                //             cameraExecutor,
+                //             TextRecognitionAnalyzer(onTextDetected, onError)
+                //         )
+                //     }
 
                 val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
@@ -62,8 +62,8 @@ fun CameraPreview(
                         lifecycleOwner,
                         cameraSelector,
                         preview,
-                        imageCapture,
-                        imageAnalyzer
+                        imageCapture
+                        // imageAnalyzer
                     )
                     
                     // Enable flash if state says so

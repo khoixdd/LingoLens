@@ -9,5 +9,6 @@ sealed interface ScanAction {
     data object OpenLearning : ScanAction
     
     data class TextDetected(val words: List<String>) : ScanAction
+    data class CaptureText(val words: List<String>) : ScanAction
     data class ErrorOccurred(val message: String) : ScanAction
 }

@@ -123,7 +123,7 @@ fun ScanScreen(
             CameraPreview(
                 imageCapture = imageCapture,
                 isFlashEnabled = state.isFlashEnabled,
-                onTextDetected = { words -> onAction(ScanAction.TextDetected(words)) },
+                // onTextDetected = { words -> onAction(ScanAction.TextDetected(words)) },
                 onError = { e -> onAction(ScanAction.ErrorOccurred(e.message ?: "Unknown error")) },
                 modifier = Modifier.fillMaxSize()
             )
@@ -212,12 +212,13 @@ fun ScanScreen(
                                     imageCapture = imageCapture,
                                     context = context,
                                     onSuccess = { words -> 
-                                        onAction(ScanAction.TextDetected(words)) 
+                                        onAction(ScanAction.CaptureText(words)) 
                                     },
                                     onError = { error -> 
                                         onAction(ScanAction.ErrorOccurred(error.message ?: "Capture failed")) 
                                     }
                                 )
+                                
                             }
                         },
                         modifier = Modifier.size(76.dp),

@@ -34,24 +34,61 @@ class ScanViewModel @Inject constructor(
             is ScanAction.ToggleFlash -> _uiState.update { it.copy(isFlashEnabled = !it.isFlashEnabled) }
             is ScanAction.Capture -> _uiState.update {
                 it.copy(isScanning = true)
-                it.copy(feedbackMessage = "Camera and text recognition are not connected yet.")
+                it.copy(feedbackMessage = "Capturing image and extracting text...")
             }
             is ScanAction.OpenGallery -> _uiState.update {
                 it.copy(isScanning = false, feedbackMessage = "Gallery import is coming in the next scan integration.")
             }
-            is ScanAction.TextDetected -> { 
+            // is ScanAction.TextDetected -> { 
+            //     // _uiState.update { 
+            //     //     it.copy(
+            //     //         extractedText = action.words, 
+            //     //         feedbackMessage = "Found ${action.words.size} words!"
+            //     //     ) 
+            //     // }
+            // }
+            is ScanAction.CaptureText -> {
                 if (action.words.isEmpty()) {
-                    _uiState.update { 
-                        it.copy(isScanning = false, feedbackMessage = "No text detected. Please try again.") 
-                    }
-                } else {
                     _uiState.update { 
                         it.copy(
                             isScanning = false, 
-                            extractedText = action.words, 
-                            feedbackMessage = "Found ${action.words.size} words!"
+                            feedbackMessage = "No text detected. Please try again."
                         ) 
                     }
+                } 
+                else if (action.words.size > 10) {
+                    _uiState.update { 
+                        it.copy(
+                            isScanning = false, 
+                            feedbackMessage = "Too many words detected (${action.words.size}). Please try again with a clearer image."
+                        ) 
+                    }
+                } 
+                else if (action.words.any { it.length < 2 }) {
+                    _uiState.update { 
+                        it.copy(
+                            isScanning = false, 
+                            feedbackMessage = "Some detected words are too short. Please try again with a clearer image."
+                        ) 
+                    }
+                } 
+                else if (action.words.any { !it.all { char -> char.isLetter() } }) {
+                    _uiState.update { 
+                        it.copy(
+                            isScanning = false, 
+                            feedbackMessage = "Some detected words contain non-letter characters. Please try again with a clearer image."
+                        ) 
+                    }
+                } 
+                // else if (action.words.any { !repository.isWordValid(it) }) {
+                //     _uiState.update { 
+                //         it.copy(
+                //             isScanning = false, 
+                //             feedbackMessage = "Some detected words are not valid English words. Please try again with a clearer image."
+                //         ) 
+                //     }
+                // } 
+                else {
                     viewModelScope.launch {
                         action.words.forEach { word ->
                             if (!repository.isWordDuplicate(word)) {
@@ -70,6 +107,12 @@ class ScanViewModel @Inject constructor(
                         }
 
                         _events.send(ScanEvent.NavigateToLearn)
+                    }
+
+                    _uiState.update { 
+                        it.copy(
+                            isScanning = false
+                        ) 
                     }
                 }
             }
