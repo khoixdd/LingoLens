@@ -133,7 +133,7 @@ fun LingoLensApp() {
                     LearnRoute(
                         onOpenNotebook = { backStack.add(Notebook) },
                         onStartReview = { backStack.add(Review) },
-                        onStartQuiz = { backStack.add(Quiz) },
+                        onStartQuiz = { backStack.add(Quiz(System.currentTimeMillis())) },
                     )
                 }
                 entry<Community> {
@@ -161,7 +161,11 @@ fun LingoLensApp() {
                     QuizResultScreen(
                         score = key.score,
                         total = key.total,
-                        onReviewAnswers = { backStack.removeLastOrNull() },
+                        onReviewAnswers = { 
+                            backStack.removeLastOrNull() 
+                            backStack.removeLastOrNull()
+                            backStack.add(Quiz(System.currentTimeMillis()))
+                        },
                         onBackToLearn = { backStack.openRoot(Learn) },
                     )
                 }
