@@ -22,11 +22,16 @@ class TextRecognitionAnalyzer(
 
             recognizer.process(image)
                 .addOnSuccessListener { visionText ->
+                    val englishWordRegex = Regex("^[a-zA-Z]+$")
+
                     val words = visionText.textBlocks
                         .flatMap { it.lines }
                         .flatMap { it.elements }
                         .map { it.text }
-                    
+                        .filter { word -> englishWordRegex.matches(word) }
+                        .map { it.lowercase() }
+                        .filter { it.length > 1 || it == "a" || it == "i" }
+                        
                     if (words.isNotEmpty()) {
                         onWordsDetected(words)
                     }
