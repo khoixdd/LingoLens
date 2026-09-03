@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1060537684994",
+    "project_id": "lingolens-61d78",
+    "storage_bucket": "lingolens-61d78.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1060537684994:android:b13a157e5b93f59b67031b",
+        "android_client_info": {
+          "package_name": "com.example.lingolens"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1060537684994-n0fu7i5amn7ep81ovdb319io1m8ecjmd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.lingolens",
+            "certificate_hash": "fa1488838c1b2ee94afb1d3878df76105a60e2a0"
+          }
+        },
+        {
+          "client_id": "1060537684994-h0dinouu0u6p33vl470ugbbqugk7nee9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCoNGd1CjoMoo2Q8xKXfpZBeFj_FmxXI2o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1060537684994-h0dinouu0u6p33vl470ugbbqugk7nee9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
