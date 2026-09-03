@@ -17,6 +17,7 @@ import com.example.lingolens.domain.model.Vocabulary
 
 sealed interface ScanEvent {
     data object NavigateToLearn : ScanEvent
+    data object LaunchGallery : ScanEvent
 }
 
 @HiltViewModel
@@ -37,7 +38,13 @@ class ScanViewModel @Inject constructor(
                 it.copy(feedbackMessage = "Capturing image and extracting text...")
             }
             is ScanAction.OpenGallery -> _uiState.update {
-                it.copy(isScanning = false, feedbackMessage = "Gallery import is coming in the next scan integration.")
+                if (!uiState.value.isScanning) {
+                    viewModelScope.launch {
+                        _events.send(ScanEvent.LaunchGallery)
+                    }
+                }
+
+                it.copy(isScanning = false, feedbackMessage = "Opening gallery...")
             }
             // is ScanAction.TextDetected -> { 
             //     // _uiState.update { 

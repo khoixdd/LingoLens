@@ -63,10 +63,13 @@ import java.util.concurrent.Executor
 import com.example.lingolens.ui.theme.LingoLensTheme
 import com.example.lingolens.feature.scan.component.CameraPreview
 import com.example.lingolens.feature.scan.component.captureAndExtractText
+import com.example.lingolens.feature.scan.component.extractTextFromUri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 
 @Composable
 fun ScanScreen(
@@ -100,10 +103,36 @@ fun ScanScreen(
             .build() 
     }
 
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            // Show the full-screen loading spinner
+            onAction(ScanAction.Capture)
+            
+            // Process the gallery image
+            extractTextFromUri(
+                context = context,
+                uri = uri,
+                onSuccess = { words -> 
+                    onAction(ScanAction.CaptureText(words)) 
+                },
+                onError = { e -> 
+                    onAction(ScanAction.ErrorOccurred(e.message ?: "Failed to process image")) 
+                }
+            )
+        }
+    }
+
     LaunchedEffect(Unit) {
         events.collect { event ->
             when (event) {
                 is ScanEvent.NavigateToLearn -> onNavigateToLearn()
+                is ScanEvent.LaunchGallery -> {
+                    photoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                }
                 else -> {}
             }
         }
@@ -240,7 +269,10 @@ fun ScanScreen(
                 }
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        IconButton(onClick = { onAction(ScanAction.OpenGallery) }) {
+                        IconButton(
+                            onClick = { onAction(ScanAction.OpenGallery) },
+                            enabled = !state.isScanning
+                        ) {
                             Icon(Icons.Outlined.PhotoLibrary, contentDescription = "Open gallery", tint = previewContentColor)
                         }
                         Text("Gallery", color = previewContentColor, style = MaterialTheme.typography.labelMedium)
