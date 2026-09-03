@@ -12,11 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Stars
 import androidx.compose.material3.Icon
@@ -49,7 +49,10 @@ fun ProfileScreen(
         item {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
-                    modifier = Modifier.size(82.dp).clip(androidx.compose.foundation.shape.CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                    modifier = Modifier
+                        .size(82.dp)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -58,8 +61,16 @@ fun ProfileScreen(
                         color = MaterialTheme.colorScheme.primary,
                     )
                 }
-                Text(state.name, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 10.dp))
-                Text("@${state.name.lowercase()}_123", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    state.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(top = 10.dp),
+                )
+                Text(
+                    if (state.email.isNotBlank()) state.email else "@${state.name.lowercase()}",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
         }
         item {

@@ -184,7 +184,10 @@ fun LingoLensApp() {
                     PrivacySettingsRoute(onBack = { backStack.removeLastOrNull() })
                 }
                 entry<Welcome> {
-                    WelcomeScreen(onContinue = { backStack.add(Login) })
+                    WelcomeScreen(
+                        onGetStarted = { backStack.add(Register) },
+                        onSignIn = { backStack.add(Login) },
+                    )
                 }
                 entry<Login> {
                     LoginRoute(

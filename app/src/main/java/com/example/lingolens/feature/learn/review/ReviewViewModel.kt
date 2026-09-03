@@ -17,8 +17,8 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class ReviewViewModel @Inject constructor(
-    private val repository: VocabularyRepository,
-    private val ttsHelper: TextToSpeechHelper,
+    val repository: VocabularyRepository,
+    val ttsHelper: TextToSpeechHelper,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReviewUiState())

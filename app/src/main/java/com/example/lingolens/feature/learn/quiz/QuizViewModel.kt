@@ -18,9 +18,9 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class QuizViewModel @Inject constructor(
-    private val repository: VocabularyRepository,
-    private val authRepository: AuthRepository,
-    private val userRepository: UserRepository,
+    val repository: VocabularyRepository,
+    val authRepository: AuthRepository,
+    val userRepository: UserRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QuizUiState())

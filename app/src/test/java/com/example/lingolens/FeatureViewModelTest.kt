@@ -127,8 +127,8 @@ class FeatureViewModelTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
     private val ttsHelper = mock(TextToSpeechHelper::class.java)
-    private val authRepository = FakeAuthRepository()
-    private val userRepository = FakeUserRepository()
+    private val authRepository: AuthRepository = FakeAuthRepository()
+    private val userRepository: UserRepository = FakeUserRepository()
 
     @Before
     fun setUp() {
@@ -142,8 +142,12 @@ class FeatureViewModelTest {
 
     @Test
     fun homeViewModelExposesLiveStatsFromRepositories() = runTest(testDispatcher) {
-        val repository = FakeVocabularyRepository()
-        val viewModel = HomeViewModel(authRepository, userRepository, repository)
+        val fakeVocabRepo: VocabularyRepository = FakeVocabularyRepository()
+        val viewModel = HomeViewModel(
+            authRepository,
+            userRepository,
+            fakeVocabRepo,
+        )
         backgroundScope.launch { viewModel.uiState.collect {} }
 
         assertEquals("Alex", viewModel.uiState.value.name)
@@ -154,7 +158,10 @@ class FeatureViewModelTest {
 
     @Test
     fun communityViewModelExposesLeaderboardState() = runTest(testDispatcher) {
-        val viewModel = CommunityViewModel(authRepository, userRepository)
+        val viewModel = CommunityViewModel(
+            authRepository,
+            userRepository,
+        )
         backgroundScope.launch { viewModel.uiState.collect {} }
 
         assertEquals(LeaderboardPeriod.ThisWeek, viewModel.uiState.value.selectedPeriod)
@@ -166,7 +173,8 @@ class FeatureViewModelTest {
 
     @Test
     fun scanInteractionsOnlyUpdateLocalPlaceholderState() {
-        val viewModel = ScanViewModel()
+        val fakeVocabRepo = FakeVocabularyRepository()
+        val viewModel = ScanViewModel(fakeVocabRepo)
         viewModel.onAction(ScanAction.ToggleFlash)
         assertTrue(viewModel.uiState.value.isFlashEnabled)
 
@@ -179,8 +187,11 @@ class FeatureViewModelTest {
 
     @Test
     fun notebookSearchExposesNoResultsState() = runTest(testDispatcher) {
-        val repository = FakeVocabularyRepository()
-        val viewModel = NotebookViewModel(repository, ttsHelper)
+        val fakeVocabRepo: VocabularyRepository = FakeVocabularyRepository()
+        val viewModel = NotebookViewModel(
+            fakeVocabRepo,
+            ttsHelper,
+        )
         backgroundScope.launch {
             viewModel.uiState.collect {}
         }
@@ -192,8 +203,11 @@ class FeatureViewModelTest {
 
     @Test
     fun reviewRevealAndRatingAdvanceTheCard() = runTest(testDispatcher) {
-        val repository = FakeVocabularyRepository()
-        val viewModel = ReviewViewModel(repository, ttsHelper)
+        val fakeVocabRepo: VocabularyRepository = FakeVocabularyRepository()
+        val viewModel = ReviewViewModel(
+            fakeVocabRepo,
+            ttsHelper,
+        )
 
         viewModel.onAction(ReviewAction.Reveal)
         assertTrue(viewModel.uiState.value.isRevealed)
@@ -201,7 +215,7 @@ class FeatureViewModelTest {
         viewModel.onAction(ReviewAction.Rate(ReviewRating.Good))
         assertTrue(viewModel.uiState.value.isCompleted)
 
-        val updatedWord = repository.getWordByText("ubiquitous")
+        val updatedWord = fakeVocabRepo.getWordByText("ubiquitous")
         assertNotNull(updatedWord)
         assertEquals(MasteryLevel.Familiar, updatedWord?.masteryLevel)
         assertTrue((updatedWord?.nextReviewAt ?: 0) > System.currentTimeMillis())
@@ -209,17 +223,17 @@ class FeatureViewModelTest {
 
     @Test
     fun duplicateWordPreventionUpdatesExistingWord() = runTest(testDispatcher) {
-        val repository = FakeVocabularyRepository()
-        assertTrue(repository.isWordDuplicate("UBIQUITOUS"))
+        val fakeVocabRepo: VocabularyRepository = FakeVocabularyRepository()
+        assertTrue(fakeVocabRepo.isWordDuplicate("UBIQUITOUS"))
 
         val duplicateInput = Vocabulary(
             id = "new_id",
             word = "ubiquitous",
             meaning = "phổ biến ở khắp mọi nơi",
         )
-        repository.addVocabulary(duplicateInput)
+        fakeVocabRepo.addVocabulary(duplicateInput)
 
-        val words = repository.getAllVocabulary()
+        val words = fakeVocabRepo.getAllVocabulary()
         var list: List<Vocabulary> = emptyList()
         val job = backgroundScope.launch { words.collect { list = it } }
 
@@ -230,8 +244,12 @@ class FeatureViewModelTest {
 
     @Test
     fun quizShowsCorrectFeedbackBeforeMovingNext() = runTest(testDispatcher) {
-        val repository = FakeVocabularyRepository()
-        val viewModel = QuizViewModel(repository, authRepository, userRepository)
+        val fakeVocabRepo: VocabularyRepository = FakeVocabularyRepository()
+        val viewModel = QuizViewModel(
+            fakeVocabRepo,
+            authRepository,
+            userRepository,
+        )
 
         val correctIdx = viewModel.uiState.value.correctIndex
         viewModel.onAction(QuizAction.SelectAnswer(correctIdx))

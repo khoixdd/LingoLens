@@ -19,9 +19,9 @@ import kotlinx.coroutines.flow.stateIn
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val userRepository: UserRepository,
-    private val vocabularyRepository: VocabularyRepository,
+    val authRepository: AuthRepository,
+    val userRepository: UserRepository,
+    val repository: VocabularyRepository,
 ) : ViewModel() {
 
     val uiState: StateFlow<HomeUiState> = combine(
@@ -32,7 +32,7 @@ class HomeViewModel @Inject constructor(
                 flowOf(null)
             }
         },
-        vocabularyRepository.getAllVocabulary(),
+        repository.getAllVocabulary(),
     ) { userProfile, allWords ->
         val authUser = authRepository.getCurrentUser()
         val displayName = userProfile?.username.orEmpty()

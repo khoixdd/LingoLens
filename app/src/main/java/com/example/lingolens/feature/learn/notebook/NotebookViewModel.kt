@@ -17,8 +17,8 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class NotebookViewModel @Inject constructor(
-    private val repository: VocabularyRepository,
-    private val ttsHelper: TextToSpeechHelper,
+    val repository: VocabularyRepository,
+    val ttsHelper: TextToSpeechHelper,
 ) : ViewModel() {
 
     private val searchQuery = MutableStateFlow("")
