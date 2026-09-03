@@ -11,6 +11,15 @@ android {
     namespace = "com.example.lingolens"
     compileSdk = 37
 
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.example.lingolens"
         minSdk = 24
