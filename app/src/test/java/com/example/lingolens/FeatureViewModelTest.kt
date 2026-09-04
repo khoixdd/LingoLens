@@ -11,6 +11,12 @@ import com.example.lingolens.domain.repository.LocationRepository
 import com.example.lingolens.domain.repository.UserLocation
 import com.example.lingolens.domain.repository.UserRepository
 import com.example.lingolens.domain.repository.VocabularyRepository
+import com.example.lingolens.domain.repository.DailyActivityRepository
+import com.example.lingolens.domain.repository.LearningProgressRepository
+import com.example.lingolens.domain.repository.NotificationSettingsRepository
+import com.example.lingolens.domain.model.DailyActivityCount
+import com.example.lingolens.domain.model.NotificationSettings
+import com.example.lingolens.notification.NotificationScheduler
 import com.example.lingolens.feature.community.CommunityViewModel
 import com.example.lingolens.feature.home.HomeViewModel
 import com.example.lingolens.feature.learn.notebook.NotebookAction
@@ -108,7 +114,15 @@ class FakeAuthRepository : AuthRepository {
 
 class FakeUserRepository : UserRepository {
     private val profileFlow = MutableStateFlow<UserProfile?>(
-        UserProfile("uid_1", "Alex", "alex@example.com", level = 7, streakDays = 12, xp = 1560),
+        UserProfile(
+            "uid_1",
+            "Alex",
+            "alex@example.com",
+            level = 8,
+            streakDays = 12,
+            xp = 1560,
+            lastActivityEpochDay = java.time.LocalDate.now().toEpochDay(),
+        ),
     )
 
     override fun observeUserProfile(uid: String): Flow<UserProfile?> = profileFlow
@@ -132,6 +146,30 @@ class FakeUserRepository : UserRepository {
     override suspend fun updateUserLocation(uid: String, lat: Double, lng: Double, isSharing: Boolean) {
         profileFlow.update { it?.copy(latitude = lat, longitude = lng, isSharingLocation = isSharing) }
     }
+}
+
+class FakeDailyActivityRepository : DailyActivityRepository {
+    private val wordsByDay = mutableMapOf<Long, MutableSet<String>>()
+    override fun observeUniqueWords(epochDay: Long): Flow<Int> =
+        MutableStateFlow(wordsByDay[epochDay]?.size ?: 0)
+    override fun observeCounts(startEpochDay: Long, endEpochDay: Long): Flow<List<DailyActivityCount>> =
+        MutableStateFlow(wordsByDay.filterKeys { it in startEpochDay..endEpochDay }.map { DailyActivityCount(it.key, it.value.size) })
+    override suspend fun recordUniqueWord(epochDay: Long, vocabularyId: String): Boolean =
+        wordsByDay.getOrPut(epochDay) { mutableSetOf() }.add(vocabularyId)
+    override suspend fun uniqueWords(epochDay: Long): Int = wordsByDay[epochDay]?.size ?: 0
+}
+
+class FakeLearningProgressRepository : LearningProgressRepository {
+    override suspend fun recordActivity(vocabularyId: String, xpReward: Int) = Unit
+    override suspend fun awardQuizXp(xpReward: Int) = Unit
+    override suspend fun evaluateCurrentAchievements() = Unit
+}
+
+class FakeNotificationSettingsRepository : NotificationSettingsRepository {
+    private val settings = MutableStateFlow(NotificationSettings())
+    override fun observeSettings(): Flow<NotificationSettings> = settings
+    override suspend fun getSettings(): NotificationSettings = settings.value
+    override suspend fun saveSettings(settings: NotificationSettings) { this.settings.value = settings }
 }
 
 class FakeLocationRepository : LocationRepository {
@@ -165,12 +203,13 @@ class FeatureViewModelTest {
             authRepository,
             userRepository,
             fakeVocabRepo,
+            FakeDailyActivityRepository(),
         )
         backgroundScope.launch { viewModel.uiState.collect {} }
 
         assertEquals("Alex", viewModel.uiState.value.name)
         assertEquals(12, viewModel.uiState.value.streakDays)
-        assertEquals(7, viewModel.uiState.value.level)
+        assertEquals(8, viewModel.uiState.value.level)
         assertEquals(1, viewModel.uiState.value.reviewWordsDue)
     }
 
@@ -205,6 +244,7 @@ class FeatureViewModelTest {
         val viewModel = NotebookViewModel(
             fakeVocabRepo,
             ttsHelper,
+            FakeLearningProgressRepository(),
         )
         backgroundScope.launch {
             viewModel.uiState.collect {}
@@ -261,8 +301,7 @@ class FeatureViewModelTest {
         val fakeVocabRepo: VocabularyRepository = FakeVocabularyRepository()
         val viewModel = QuizViewModel(
             fakeVocabRepo,
-            authRepository,
-            userRepository,
+            FakeLearningProgressRepository(),
         )
 
         val correctIdx = viewModel.uiState.value.correctIndex
@@ -277,8 +316,13 @@ class FeatureViewModelTest {
     }
 
     @Test
-    fun notificationToggleUpdatesLocalState() {
-        val viewModel = NotificationSettingsViewModel()
+    fun notificationToggleUpdatesPersistentState() = runTest(testDispatcher) {
+        val viewModel = NotificationSettingsViewModel(
+            FakeNotificationSettingsRepository(),
+            mock(NotificationScheduler::class.java),
+        )
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        viewModel.onAction(NotificationSettingsAction.PermissionStatusChanged(true))
         viewModel.onAction(NotificationSettingsAction.Toggle(NotificationSetting.DailyReminder, false))
         assertFalse(viewModel.uiState.value.dailyReminder)
     }

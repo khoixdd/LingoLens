@@ -41,6 +41,8 @@ import com.example.lingolens.feature.learn.review.ReviewRoute
 import com.example.lingolens.feature.profile.ProfileRoute
 import com.example.lingolens.feature.profile.notification.NotificationSettingsRoute
 import com.example.lingolens.feature.profile.privacy.PrivacySettingsRoute
+import com.example.lingolens.feature.profile.achievements.AchievementsRoute
+import com.example.lingolens.feature.progress.StatisticsRoute
 import com.example.lingolens.feature.scan.ScanRoute
 import com.google.firebase.auth.FirebaseAuth
 
@@ -130,6 +132,7 @@ fun LingoLensApp() {
                     HomeRoute(
                         onOpenLearn = { backStack.openRoot(Learn) },
                         onOpenReview = { backStack.add(Review) },
+                        onOpenNotifications = { backStack.add(NotificationSettings) },
                     )
                 }
                 entry<Scan> {
@@ -140,6 +143,7 @@ fun LingoLensApp() {
                         onOpenNotebook = { backStack.add(Notebook) },
                         onStartReview = { backStack.add(Review) },
                         onStartQuiz = { backStack.add(Quiz(System.currentTimeMillis())) },
+                        onOpenStatistics = { backStack.add(Statistics) },
                     )
                 }
                 entry<Community> {
@@ -179,6 +183,8 @@ fun LingoLensApp() {
                     ProfileRoute(
                         onOpenMyWords = { backStack.add(Notebook) },
                         onOpenNotifications = { backStack.add(NotificationSettings) },
+                        onOpenAchievements = { backStack.add(Achievements) },
+                        onOpenStatistics = { backStack.add(Statistics) },
                         onOpenPrivacy = { backStack.add(PrivacySettings) },
                         onLogout = {
                             runCatching { FirebaseAuth.getInstance().signOut() }
@@ -188,6 +194,12 @@ fun LingoLensApp() {
                 }
                 entry<NotificationSettings> {
                     NotificationSettingsRoute(onBack = { backStack.removeLastOrNull() })
+                }
+                entry<Statistics> {
+                    StatisticsRoute(onBack = { backStack.removeLastOrNull() })
+                }
+                entry<Achievements> {
+                    AchievementsRoute(onBack = { backStack.removeLastOrNull() })
                 }
                 entry<PrivacySettings> {
                     PrivacySettingsRoute(onBack = { backStack.removeLastOrNull() })

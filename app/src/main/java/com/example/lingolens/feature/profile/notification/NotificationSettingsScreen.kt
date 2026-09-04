@@ -18,6 +18,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -48,11 +50,28 @@ fun NotificationSettingsScreen(
             )
         },
     ) { insets ->
+        if (state.isLoading) {
+            Box(Modifier.fillMaxSize().padding(insets), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
         LazyColumn(
             Modifier.fillMaxSize().padding(insets),
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+            if (state.permissionDenied) {
+                item {
+                    LingoLensCard(containerColor = MaterialTheme.colorScheme.errorContainer) {
+                        Text(
+                            "Notification permission was denied. Reminders remain off until permission is granted.",
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            }
             item {
                 LingoLensCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
                     SettingToggleRow(

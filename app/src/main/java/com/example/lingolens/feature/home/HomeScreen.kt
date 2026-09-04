@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.Stars
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +40,7 @@ import com.example.lingolens.ui.components.LingoLensCard
 import com.example.lingolens.ui.components.LingoLensPrimaryButton
 import com.example.lingolens.ui.components.SectionHeader
 import com.example.lingolens.ui.theme.LingoLensTheme
+import com.example.lingolens.domain.model.WeeklyActivityDay
 
 @Composable
 fun HomeScreen(
@@ -46,6 +48,12 @@ fun HomeScreen(
     onAction: (HomeAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (state.isLoading) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
@@ -61,7 +69,12 @@ fun HomeScreen(
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
-                Surface(modifier = Modifier.size(40.dp), shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
+                Surface(
+                    onClick = { onAction(HomeAction.OpenNotifications) },
+                    modifier = Modifier.size(40.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             Icons.Outlined.NotificationsNone,
@@ -86,6 +99,24 @@ fun HomeScreen(
                     value = "Lv. ${state.level}",
                     label = state.title,
                     modifier = Modifier.weight(1f),
+                )
+            }
+        }
+        item {
+            LingoLensCard(contentPadding = PaddingValues(14.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("${state.xp} XP", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    Text(
+                        "${state.xpPerLevel - state.xpProgressInLevel} to next level",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    progress = { state.xpProgressInLevel.toFloat() / state.xpPerLevel.coerceAtLeast(1) },
+                    modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
                 )
             }
         }
@@ -179,8 +210,8 @@ private fun HomeStat(
 }
 
 @Composable
-private fun WeeklyActivityChart(activity: List<DailyActivity>) {
-    val highest = activity.maxOfOrNull { it.words }?.coerceAtLeast(1) ?: 1
+private fun WeeklyActivityChart(activity: List<WeeklyActivityDay>) {
+    val highest = activity.maxOfOrNull { it.uniqueWords }?.coerceAtLeast(1) ?: 1
     Row(
         modifier = Modifier.fillMaxWidth().height(90.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -195,13 +226,13 @@ private fun WeeklyActivityChart(activity: List<DailyActivity>) {
                     Box(
                         modifier = Modifier
                             .width(12.dp)
-                            .fillMaxHeight(item.words.toFloat() / highest)
+                            .fillMaxHeight(item.uniqueWords.toFloat() / highest)
                             .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
                             .background(MaterialTheme.colorScheme.primary),
                     )
                 }
                 Text(
-                    item.day,
+                    item.dayLabel,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp),

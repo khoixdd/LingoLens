@@ -3,6 +3,7 @@ package com.example.lingolens.feature.learn
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Quiz
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +44,10 @@ fun LearnScreen(
     onAction: (LearnAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (state.isLoading) {
+        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        return
+    }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
@@ -86,6 +92,7 @@ fun LearnScreen(
                         title = "Statistics",
                         subtitle = "See progress",
                         icon = Icons.Outlined.BarChart,
+                        onClick = { onAction(LearnAction.OpenStatistics) },
                     )
                 }
             }

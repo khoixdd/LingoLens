@@ -20,6 +20,7 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Stars
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,6 +41,10 @@ fun ProfileScreen(
     onAction: (ProfileAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (state.isLoading) {
+        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        return
+    }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
@@ -75,7 +80,7 @@ fun ProfileScreen(
         }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ProfileStat(Icons.Outlined.Stars, "Lv. ${state.level}", "Explorer", Modifier.weight(1f))
+                ProfileStat(Icons.Outlined.Stars, "Lv. ${state.level}", state.title, Modifier.weight(1f))
                 ProfileStat(Icons.Outlined.EmojiEvents, state.streakDays.toString(), "day streak", Modifier.weight(1f))
                 ProfileStat(null, state.xp.toString(), "total XP", Modifier.weight(1f), symbol = "XP")
             }

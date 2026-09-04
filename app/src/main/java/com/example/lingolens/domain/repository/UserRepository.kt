@@ -3,6 +3,7 @@ package com.example.lingolens.domain.repository
 import com.example.lingolens.domain.model.AuthUser
 import com.example.lingolens.domain.model.LeaderboardLoadState
 import com.example.lingolens.domain.model.UserProfile
+import com.example.lingolens.domain.model.GamificationUpdate
 import kotlinx.coroutines.flow.Flow
 
 interface UserRepository {
@@ -15,4 +16,11 @@ interface UserRepository {
     suspend fun addXp(uid: String, xpAmount: Int)
     suspend fun syncTotalWords(uid: String, totalWords: Int)
     suspend fun updateUserLocation(uid: String, lat: Double, lng: Double, isSharing: Boolean)
+    suspend fun updateGamification(
+        uid: String,
+        activityEpochDay: Long?,
+        xpDelta: Int,
+        dailyWords: Int,
+        totalWords: Int,
+    ): GamificationUpdate? = null
 }

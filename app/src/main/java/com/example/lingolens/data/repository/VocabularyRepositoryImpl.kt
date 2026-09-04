@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 
 @Singleton
 class VocabularyRepositoryImpl @Inject constructor(
@@ -22,16 +24,18 @@ class VocabularyRepositoryImpl @Inject constructor(
 
     override fun getAllVocabulary(): Flow<List<Vocabulary>> {
         val userId = currentUserId() ?: return flowOf(emptyList())
-        return dao.observeAll(userId)
-            .map { entities -> entities.map { it.toDomain() } }
-            .catch { emit(emptyList()) }
+        return flow {
+            dao.claimLegacyVocabulary(userId)
+            emitAll(dao.observeAll(userId).map { entities -> entities.map { it.toDomain() } })
+        }.catch { emit(emptyList()) }
     }
 
     override fun getVocabularyById(id: String): Flow<Vocabulary?> {
         val userId = currentUserId() ?: return flowOf(null)
-        return dao.observeById(userId, id)
-            .map { entity -> entity?.toDomain() }
-            .catch { emit(null) }
+        return flow {
+            dao.claimLegacyVocabulary(userId)
+            emitAll(dao.observeById(userId, id).map { entity -> entity?.toDomain() })
+        }.catch { emit(null) }
     }
 
     override suspend fun getWordByText(word: String): Vocabulary? {

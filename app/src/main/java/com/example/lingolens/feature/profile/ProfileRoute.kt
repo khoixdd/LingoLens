@@ -10,6 +10,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun ProfileRoute(
     onOpenMyWords: () -> Unit,
     onOpenNotifications: () -> Unit,
+    onOpenAchievements: () -> Unit,
+    onOpenStatistics: () -> Unit,
     onOpenPrivacy: () -> Unit,
     onLogout: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel(),
@@ -29,8 +31,9 @@ fun ProfileRoute(
                 ProfileAction.OpenMyWords -> onOpenMyWords()
                 ProfileAction.OpenNotifications -> onOpenNotifications()
                 ProfileAction.OpenPrivacy -> onOpenPrivacy()
+                ProfileAction.OpenAchievements -> onOpenAchievements()
+                ProfileAction.OpenStatistics -> onOpenStatistics()
                 ProfileAction.Logout -> viewModel.onAction(ProfileAction.Logout)
-                ProfileAction.OpenAchievements, ProfileAction.OpenStatistics -> Unit
             }
         },
     )

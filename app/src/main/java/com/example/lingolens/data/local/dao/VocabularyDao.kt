@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface VocabularyDao {
+    @Query("UPDATE vocabulary SET userId = :userId WHERE userId = ''")
+    suspend fun claimLegacyVocabulary(userId: String): Int
+
     @Query("SELECT * FROM vocabulary WHERE userId = :userId ORDER BY createdAt DESC")
     fun observeAll(userId: String): Flow<List<VocabularyEntity>>
 

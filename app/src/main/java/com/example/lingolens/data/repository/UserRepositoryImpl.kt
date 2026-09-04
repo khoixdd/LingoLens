@@ -6,6 +6,12 @@ import android.util.Log
 import com.example.lingolens.domain.model.AuthUser
 import com.example.lingolens.domain.model.LeaderboardLoadState
 import com.example.lingolens.domain.model.UserProfile
+import com.example.lingolens.domain.model.GamificationUpdate
+import com.example.lingolens.domain.gamification.AchievementEvaluator
+import com.example.lingolens.domain.gamification.AchievementSnapshot
+import com.example.lingolens.domain.gamification.LevelCalculator
+import com.example.lingolens.domain.gamification.StreakCalculator
+import com.example.lingolens.domain.model.DEFAULT_DAILY_GOAL
 import com.example.lingolens.domain.repository.UserRepository
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
@@ -157,15 +163,16 @@ class UserRepositoryImpl @Inject constructor(
             .addOnSuccessListener { snapshot ->
                 val now = System.currentTimeMillis()
                 val defaultName = user.displayName.ifBlank { user.email.substringBefore("@") }.ifBlank { "Learner" }
-                val updates: Map<String, Any> = if (!snapshot.exists() || snapshot.getLong("xp") == null) {
+                val updates: Map<String, Any> = if (!snapshot.exists()) {
                     hashMapOf(
                         "uid" to user.uid,
                         "username" to defaultName,
                         "email" to user.email,
                         "avatarUrl" to user.photoUrl,
-                        "xp" to 100,
+                        "xp" to 0,
                         "level" to 1,
-                        "streakDays" to 1,
+                        "streakDays" to 0,
+                        "unlockedAchievementIds" to emptyList<String>(),
                         "totalWords" to 0,
                         "latitude" to 10.762622,
                         "longitude" to 106.682221,
@@ -197,9 +204,9 @@ class UserRepositoryImpl @Inject constructor(
             runCatching {
                 val docRef = db.collection("users").document(uid)
                 val snapshot = docRef.get().await()
-                val currentXp = if (snapshot.exists()) (snapshot.getLong("xp")?.toInt() ?: 100) else 100
+                val currentXp = if (snapshot.exists()) (snapshot.getLong("xp")?.toInt() ?: 0) else 0
                 val newXp = currentXp + xpAmount
-                val newLevel = (newXp / 200) + 1
+                val newLevel = LevelCalculator.levelForXp(newXp)
                 val data = hashMapOf<String, Any>(
                     "uid" to uid,
                     "xp" to newXp,
@@ -245,6 +252,74 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateGamification(
+        uid: String,
+        activityEpochDay: Long?,
+        xpDelta: Int,
+        dailyWords: Int,
+        totalWords: Int,
+    ): GamificationUpdate? {
+        val db = firestore ?: return null
+        if (uid.isBlank()) return null
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                val docRef = db.collection("users").document(uid)
+                db.runTransaction { transaction ->
+                    val snapshot = transaction.get(docRef)
+                    val currentXp = snapshot.getLong("xp")?.toInt() ?: 0
+                    val newXp = (currentXp + xpDelta.coerceAtLeast(0)).coerceAtLeast(0)
+                    val newLevel = LevelCalculator.levelForXp(newXp)
+                    val oldStreak = snapshot.getLong("streakDays")?.toInt() ?: 0
+                    val oldLastDay = snapshot.getLong("lastActivityEpochDay")
+                    val newStreak = if (activityEpochDay != null) {
+                        StreakCalculator.updatedStreak(oldStreak, oldLastDay, activityEpochDay)
+                    } else {
+                        oldStreak
+                    }
+                    val newLastDay = when {
+                        activityEpochDay == null -> oldLastDay
+                        oldLastDay == null -> activityEpochDay
+                        else -> maxOf(oldLastDay, activityEpochDay)
+                    }
+                    val unlocked = snapshot.get("unlockedAchievementIds")
+                        .let { it as? List<*> }
+                        .orEmpty()
+                        .filterIsInstance<String>()
+                        .toSet()
+                    val newlyUnlocked = AchievementEvaluator.newlyUnlocked(
+                        snapshot = AchievementSnapshot(
+                            dailyGoalCompleted = dailyWords >= DEFAULT_DAILY_GOAL,
+                            streak = newStreak,
+                            xp = newXp,
+                            level = newLevel,
+                            vocabularyCount = totalWords,
+                        ),
+                        alreadyUnlocked = unlocked,
+                    )
+                    val allUnlocked = unlocked + newlyUnlocked
+                    val updates = buildMap<String, Any> {
+                        put("uid", uid)
+                        put("xp", newXp)
+                        put("level", newLevel)
+                        put("streakDays", newStreak)
+                        put("totalWords", totalWords.coerceAtLeast(0))
+                        put("unlockedAchievementIds", allUnlocked.sorted())
+                        if (newLastDay != null) put("lastActivityEpochDay", newLastDay)
+                    }
+                    transaction.set(docRef, updates, SetOptions.merge())
+                    GamificationUpdate(
+                        xp = newXp,
+                        level = newLevel,
+                        streakDays = newStreak,
+                        lastActivityEpochDay = newLastDay,
+                        unlockedAchievementIds = allUnlocked,
+                        newlyUnlockedAchievementIds = newlyUnlocked,
+                    )
+                }.await()
+            }.getOrNull()
+        }
+    }
+
     private fun mapDocumentToUserProfile(docId: String, data: Map<String, Any>): UserProfile {
         val currentUser = auth?.currentUser
         val emailPrefix = currentUser?.email?.substringBefore("@").orEmpty()
@@ -258,15 +333,19 @@ class UserRepositoryImpl @Inject constructor(
             rawUsername.ifBlank { (data["email"] as? String).orEmpty().substringBefore("@") }.ifBlank { "Learner" }
         }
 
+        val xp = (data["xp"] as? Number)?.toInt() ?: 0
         return UserProfile(
             uid = docUid,
             username = finalUsername,
             email = (data["email"] as? String).orEmpty().ifBlank { if (docUid == currentUser?.uid) currentUser?.email.orEmpty() else "" },
             avatarUrl = (data["avatarUrl"] as? String).orEmpty(),
-            xp = (data["xp"] as? Long)?.toInt() ?: 100,
-            level = (data["level"] as? Long)?.toInt() ?: 1,
-            streakDays = (data["streakDays"] as? Long)?.toInt() ?: 1,
-            totalWords = (data["totalWords"] as? Long)?.toInt() ?: 0,
+            xp = xp,
+            level = LevelCalculator.levelForXp(xp),
+            streakDays = (data["streakDays"] as? Number)?.toInt() ?: 0,
+            lastActivityEpochDay = (data["lastActivityEpochDay"] as? Number)?.toLong(),
+            unlockedAchievementIds = (data["unlockedAchievementIds"] as? List<*>)
+                .orEmpty().filterIsInstance<String>().toSet(),
+            totalWords = (data["totalWords"] as? Number)?.toInt() ?: 0,
             latitude = (data["latitude"] as? Double) ?: 10.762622,
             longitude = (data["longitude"] as? Double) ?: 106.682221,
             isSharingLocation = (data["isSharingLocation"] as? Boolean) ?: false,
