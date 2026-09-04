@@ -1,26 +1,21 @@
 package com.example.lingolens.feature.home
 
-data class DailyActivity(
-    val day: String,
-    val words: Int,
-)
+import com.example.lingolens.domain.gamification.LevelCalculator
+import com.example.lingolens.domain.model.DEFAULT_DAILY_GOAL
+import com.example.lingolens.domain.model.WeeklyActivityDay
 
 data class HomeUiState(
-    val name: String = "Alex",
-    val streakDays: Int = 12,
-    val level: Int = 7,
-    val title: String = "Explorer",
-    val xp: Int = 1560,
-    val dailyWordsCompleted: Int = 7,
-    val dailyWordsGoal: Int = 10,
-    val reviewWordsDue: Int = 14,
-    val weeklyActivity: List<DailyActivity> = listOf(
-        DailyActivity("Mon", 5),
-        DailyActivity("Tue", 8),
-        DailyActivity("Wed", 6),
-        DailyActivity("Thu", 10),
-        DailyActivity("Fri", 7),
-        DailyActivity("Sat", 4),
-        DailyActivity("Sun", 7),
-    ),
+    val isLoading: Boolean = true,
+    val name: String = "",
+    val streakDays: Int = 0,
+    val level: Int = 1,
+    val title: String = LevelCalculator.titleForLevel(1),
+    val xp: Int = 0,
+    val xpProgressInLevel: Int = 0,
+    val xpPerLevel: Int = LevelCalculator.XP_PER_LEVEL,
+    val totalWords: Int = 0,
+    val dailyWordsCompleted: Int = 0,
+    val dailyWordsGoal: Int = DEFAULT_DAILY_GOAL,
+    val reviewWordsDue: Int = 0,
+    val weeklyActivity: List<WeeklyActivityDay> = emptyList(),
 )

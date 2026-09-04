@@ -1,5 +1,6 @@
 package com.example.lingolens.feature.scan.component
 
+import android.annotation.SuppressLint
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -7,6 +8,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
+@SuppressLint("UnsafeOptInUsageError")
 class TextRecognitionAnalyzer(
     private val onWordsDetected: (List<String>) -> Unit,
     private val onError: (Exception) -> Unit

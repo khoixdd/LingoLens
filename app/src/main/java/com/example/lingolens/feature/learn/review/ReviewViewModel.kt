@@ -6,6 +6,7 @@ import com.example.lingolens.core.common.TextToSpeechHelper
 import com.example.lingolens.domain.model.MasteryLevel
 import com.example.lingolens.domain.model.Vocabulary
 import com.example.lingolens.domain.repository.VocabularyRepository
+import com.example.lingolens.domain.repository.LearningProgressRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,8 +18,9 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class ReviewViewModel @Inject constructor(
-    private val repository: VocabularyRepository,
-    private val ttsHelper: TextToSpeechHelper,
+    val repository: VocabularyRepository,
+    val ttsHelper: TextToSpeechHelper,
+    private val learningProgressRepository: LearningProgressRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReviewUiState())
@@ -26,6 +28,7 @@ class ReviewViewModel @Inject constructor(
 
     private var allVocabularyList: List<Vocabulary> = emptyList()
     private var reviewWords: List<Vocabulary> = emptyList()
+    private val ratedIndexes = mutableSetOf<Int>()
 
     init {
         loadReviewQueue()
@@ -80,7 +83,7 @@ class ReviewViewModel @Inject constructor(
 
     fun onAction(action: ReviewAction) {
         when (action) {
-            ReviewAction.Reveal -> _uiState.update { it.copy(isRevealed = true) }
+            ReviewAction.Reveal -> _uiState.update { it.copy(isRevealed = !it.isRevealed) }
             ReviewAction.PlayPronunciation -> {
                 val currentWord = _uiState.value.word
                 if (currentWord.isNotBlank()) {
@@ -95,11 +98,12 @@ class ReviewViewModel @Inject constructor(
             }
             is ReviewAction.Rate -> {
                 val index = _uiState.value.currentIndex
-                if (index < reviewWords.size) {
+                if (_uiState.value.isRevealed && index < reviewWords.size && ratedIndexes.add(index)) {
                     val currentWord = reviewWords[index]
                     val updatedWord = calculateSrsUpdate(currentWord, action.rating)
                     viewModelScope.launch {
                         repository.updateVocabulary(updatedWord)
+                        learningProgressRepository.recordActivity(currentWord.id, REVIEW_XP)
                     }
                     updateStateForCurrentIndex(index + 1)
                 }
@@ -164,4 +168,8 @@ class ReviewViewModel @Inject constructor(
         val wrong: Int,
         val days: Int,
     )
+
+    private companion object {
+        const val REVIEW_XP = 5
+    }
 }

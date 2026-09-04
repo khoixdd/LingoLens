@@ -4,9 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lingolens.domain.model.MasteryLevel
 import com.example.lingolens.domain.model.Vocabulary
-import com.example.lingolens.domain.repository.AuthRepository
-import com.example.lingolens.domain.repository.UserRepository
 import com.example.lingolens.domain.repository.VocabularyRepository
+import com.example.lingolens.domain.repository.LearningProgressRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,15 +17,15 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class QuizViewModel @Inject constructor(
-    private val repository: VocabularyRepository,
-    private val authRepository: AuthRepository,
-    private val userRepository: UserRepository,
+    val repository: VocabularyRepository,
+    private val learningProgressRepository: LearningProgressRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QuizUiState())
     val uiState: StateFlow<QuizUiState> = _uiState.asStateFlow()
 
     private var quizQuestions: List<QuizQuestionData> = emptyList()
+    private var completionAwarded = false
 
     init {
         loadQuizQuestions()
@@ -109,6 +108,7 @@ class QuizViewModel @Inject constructor(
                 }
             }
             QuizAction.CheckAnswer -> {
+                if (state.answerState != QuizAnswerState.Selected) return null
                 val selected = state.selectedIndex ?: return null
                 val isCorrect = selected == state.correctIndex
                 val newState = if (isCorrect) QuizAnswerState.Correct else QuizAnswerState.Incorrect
@@ -137,6 +137,7 @@ class QuizViewModel @Inject constructor(
                     }
                     viewModelScope.launch {
                         repository.updateVocabulary(updated)
+                        learningProgressRepository.recordActivity(target.id)
                     }
                 }
             }
@@ -146,12 +147,11 @@ class QuizViewModel @Inject constructor(
                 val nextIndex = state.questionIndex + 1
 
                 if (nextIndex >= state.totalQuestions) {
-                    val earnedXp = earnedScore * 10
-                    val currentUser = authRepository.getCurrentUser()
-                    if (currentUser != null && earnedXp > 0) {
-                        viewModelScope.launch {
-                            userRepository.addXp(currentUser.uid, earnedXp)
-                        }
+                    if (completionAwarded) return null
+                    completionAwarded = true
+                    val earnedXp = (earnedScore * 10) + 20 // Award +20 XP base completion bonus + 10 XP per correct answer
+                    if (earnedXp > 0) {
+                        viewModelScope.launch { learningProgressRepository.awardQuizXp(earnedXp) }
                     }
                     return QuizCompletion(earnedScore, state.totalQuestions)
                 }

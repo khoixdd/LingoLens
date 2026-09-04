@@ -10,5 +10,5 @@ fun CommunityRoute(
     viewModel: CommunityViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    CommunityScreen(state = state, onAction = viewModel::onAction)
+    CommunityScreen(state = state)
 }

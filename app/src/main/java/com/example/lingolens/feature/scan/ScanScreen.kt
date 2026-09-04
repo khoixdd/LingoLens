@@ -204,13 +204,6 @@ fun ScanScreen(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     style = MaterialTheme.typography.titleMedium,
                                 )
-                                Text(
-                                    text = "Keep the words inside the frame",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    textAlign = TextAlign.Center,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    modifier = Modifier.padding(top = 6.dp),
-                                )
                             }
                         }
                     }

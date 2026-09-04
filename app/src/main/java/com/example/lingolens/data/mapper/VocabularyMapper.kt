@@ -28,8 +28,9 @@ fun VocabularyEntity.toDomain(): Vocabulary {
     )
 }
 
-fun Vocabulary.toEntity(): VocabularyEntity {
+fun Vocabulary.toEntity(userId: String): VocabularyEntity {
     return VocabularyEntity(
+        userId = userId,
         id = id,
         word = word,
         meaning = meaning,

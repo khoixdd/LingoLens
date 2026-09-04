@@ -17,7 +17,10 @@ sealed interface LingoLensDestination : NavKey
 @Serializable data class QuizResult(val score: Int, val total: Int) : LingoLensDestination
 @Serializable data object Profile : LingoLensDestination
 @Serializable data object NotificationSettings : LingoLensDestination
+@Serializable data object Statistics : LingoLensDestination
+@Serializable data object Achievements : LingoLensDestination
 @Serializable data object PrivacySettings : LingoLensDestination
+@Serializable data object Splash : LingoLensDestination
 @Serializable data object Welcome : LingoLensDestination
 @Serializable data object Login : LingoLensDestination
 @Serializable data object Register : LingoLensDestination

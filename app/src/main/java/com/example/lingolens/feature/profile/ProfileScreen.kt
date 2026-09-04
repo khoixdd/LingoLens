@@ -12,14 +12,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Stars
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,16 +41,22 @@ fun ProfileScreen(
     onAction: (ProfileAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (state.isLoading) {
+        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        return
+    }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { Text("Profile", style = MaterialTheme.typography.headlineMedium) }
         item {
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    modifier = Modifier.size(82.dp).clip(androidx.compose.foundation.shape.CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -58,13 +65,19 @@ fun ProfileScreen(
                         color = MaterialTheme.colorScheme.primary,
                     )
                 }
-                Text(state.name, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 10.dp))
-                Text("@${state.name.lowercase()}_123", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(Modifier.padding(start = 14.dp)) {
+                    Text(state.name, style = MaterialTheme.typography.headlineSmall)
+                    Text(
+                        "@${state.email.substringBefore("@").ifBlank { state.name.lowercase().replace(" ", "_") }}",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
         }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ProfileStat(Icons.Outlined.Stars, "Lv. ${state.level}", "Explorer", Modifier.weight(1f))
+                ProfileStat(Icons.Outlined.Stars, "Lv. ${state.level}", state.title, Modifier.weight(1f))
                 ProfileStat(Icons.Outlined.EmojiEvents, state.streakDays.toString(), "day streak", Modifier.weight(1f))
                 ProfileStat(null, state.xp.toString(), "total XP", Modifier.weight(1f), symbol = "XP")
             }

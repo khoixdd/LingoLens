@@ -5,8 +5,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.lingolens.data.local.AppDatabase
+import com.example.lingolens.data.local.MIGRATION_1_2
+import com.example.lingolens.data.local.MIGRATION_2_3
+import com.example.lingolens.data.local.dao.DailyActivityDao
+import com.example.lingolens.data.local.dao.NotificationSettingsDao
 import com.example.lingolens.data.local.dao.VocabularyDao
-import com.example.lingolens.data.local.entity.VocabularyEntity
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -38,7 +41,7 @@ object DatabaseModule {
                 }
             }
         })
-        .fallbackToDestructiveMigration()
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
         .build()
         return database
     }
@@ -47,4 +50,11 @@ object DatabaseModule {
     fun provideVocabularyDao(database: AppDatabase): VocabularyDao {
         return database.vocabularyDao()
     }
+
+    @Provides
+    fun provideDailyActivityDao(database: AppDatabase): DailyActivityDao = database.dailyActivityDao()
+
+    @Provides
+    fun provideNotificationSettingsDao(database: AppDatabase): NotificationSettingsDao =
+        database.notificationSettingsDao()
 }

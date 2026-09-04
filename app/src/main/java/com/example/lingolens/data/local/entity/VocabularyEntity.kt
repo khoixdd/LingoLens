@@ -3,9 +3,10 @@ package com.example.lingolens.data.local.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "vocabulary")
+@Entity(tableName = "vocabulary", primaryKeys = ["userId", "id"])
 data class VocabularyEntity(
-    @PrimaryKey val id: String,
+    val userId: String,
+    val id: String,
     val word: String,
     val meaning: String,
     val pronunciation: String,

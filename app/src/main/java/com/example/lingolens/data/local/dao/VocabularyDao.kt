@@ -10,20 +10,23 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface VocabularyDao {
-    @Query("SELECT * FROM vocabulary ORDER BY createdAt DESC")
-    fun observeAll(): Flow<List<VocabularyEntity>>
+    @Query("UPDATE vocabulary SET userId = :userId WHERE userId = ''")
+    suspend fun claimLegacyVocabulary(userId: String): Int
 
-    @Query("SELECT * FROM vocabulary WHERE id = :id")
-    fun observeById(id: String): Flow<VocabularyEntity?>
+    @Query("SELECT * FROM vocabulary WHERE userId = :userId ORDER BY createdAt DESC")
+    fun observeAll(userId: String): Flow<List<VocabularyEntity>>
 
-    @Query("SELECT * FROM vocabulary WHERE id = :id")
-    suspend fun getById(id: String): VocabularyEntity?
+    @Query("SELECT * FROM vocabulary WHERE userId = :userId AND id = :id")
+    fun observeById(userId: String, id: String): Flow<VocabularyEntity?>
 
-    @Query("SELECT * FROM vocabulary WHERE LOWER(word) = LOWER(:word) LIMIT 1")
-    suspend fun getByWordText(word: String): VocabularyEntity?
+    @Query("SELECT * FROM vocabulary WHERE userId = :userId AND id = :id")
+    suspend fun getById(userId: String, id: String): VocabularyEntity?
 
-    @Query("SELECT COUNT(*) FROM vocabulary")
-    suspend fun getCount(): Int
+    @Query("SELECT * FROM vocabulary WHERE userId = :userId AND LOWER(word) = LOWER(:word) LIMIT 1")
+    suspend fun getByWordText(userId: String, word: String): VocabularyEntity?
+
+    @Query("SELECT COUNT(*) FROM vocabulary WHERE userId = :userId")
+    suspend fun getCount(userId: String): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: VocabularyEntity)
@@ -34,9 +37,9 @@ interface VocabularyDao {
     @Update
     suspend fun update(item: VocabularyEntity): Int
 
-    @Query("UPDATE vocabulary SET isFavorite = :isFavorite WHERE id = :id")
-    suspend fun updateFavorite(id: String, isFavorite: Boolean): Int
+    @Query("UPDATE vocabulary SET isFavorite = :isFavorite WHERE userId = :userId AND id = :id")
+    suspend fun updateFavorite(userId: String, id: String, isFavorite: Boolean): Int
 
-    @Query("DELETE FROM vocabulary WHERE id = :id")
-    suspend fun deleteById(id: String): Int
+    @Query("DELETE FROM vocabulary WHERE userId = :userId AND id = :id")
+    suspend fun deleteById(userId: String, id: String): Int
 }

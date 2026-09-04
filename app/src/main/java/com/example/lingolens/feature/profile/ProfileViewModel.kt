@@ -6,6 +6,8 @@ import com.example.lingolens.domain.model.UserProfile
 import com.example.lingolens.domain.repository.AuthRepository
 import com.example.lingolens.domain.repository.UserRepository
 import com.example.lingolens.domain.repository.VocabularyRepository
+import com.example.lingolens.domain.gamification.LevelCalculator
+import com.example.lingolens.domain.gamification.StreakCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,6 +30,17 @@ class ProfileViewModel @Inject constructor(
 
     private val logoutState = MutableStateFlow(false)
 
+    init {
+        viewModelScope.launch {
+            vocabularyRepository.getAllVocabulary().collect { allWords ->
+                val currentUser = authRepository.getCurrentUser()
+                if (currentUser != null) {
+                    userRepository.syncTotalWords(currentUser.uid, allWords.size)
+                }
+            }
+        }
+    }
+
     val uiState: StateFlow<ProfileUiState> = combine(
         authRepository.observeAuthState().flatMapLatest { authUser ->
             if (authUser != null) {
@@ -46,11 +59,17 @@ class ProfileViewModel @Inject constructor(
         val email = userProfile?.email.orEmpty().ifBlank { authUser?.email.orEmpty() }
 
         ProfileUiState(
+            isLoading = false,
             name = displayName,
             email = email,
-            level = userProfile?.level ?: 1,
-            streakDays = userProfile?.streakDays ?: 1,
-            xp = userProfile?.xp ?: 100,
+            level = LevelCalculator.levelForXp(userProfile?.xp ?: 0),
+            title = LevelCalculator.titleForLevel(LevelCalculator.levelForXp(userProfile?.xp ?: 0)),
+            streakDays = StreakCalculator.effectiveStreak(
+                userProfile?.streakDays ?: 0,
+                userProfile?.lastActivityEpochDay,
+                java.time.LocalDate.now().toEpochDay(),
+            ),
+            xp = userProfile?.xp ?: 0,
             words = allWords.size,
             isLoggedOut = isLoggedOut,
         )

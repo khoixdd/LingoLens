@@ -10,6 +10,7 @@ fun LearnRoute(
     onOpenNotebook: () -> Unit,
     onStartReview: () -> Unit,
     onStartQuiz: () -> Unit,
+    onOpenStatistics: () -> Unit,
     viewModel: LearnViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -20,6 +21,7 @@ fun LearnRoute(
                 LearnAction.OpenNotebook -> onOpenNotebook()
                 LearnAction.StartReview -> onStartReview()
                 LearnAction.StartQuiz -> onStartQuiz()
+                LearnAction.OpenStatistics -> onOpenStatistics()
             }
         },
     )

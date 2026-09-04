@@ -67,7 +67,7 @@ fun VocabularyDetailScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Word details") },
+                title = {},
                 navigationIcon = {
                     IconButton(onClick = { onAction(VocabularyDetailAction.Back) }) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back")
@@ -100,7 +100,7 @@ fun VocabularyDetailScreen(
         ) {
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(state.word, style = MaterialTheme.typography.headlineLarge)
+                    Text(state.word, style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.primary)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (state.pronunciation.isNotBlank()) {
                             Text(
@@ -127,20 +127,16 @@ fun VocabularyDetailScreen(
                 }
             }
             item {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Spacer(Modifier.height(14.dp))
-                Text(
-                    "Vietnamese meaning",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(Modifier.height(6.dp))
-                Text(state.meaning, style = MaterialTheme.typography.titleLarge)
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(state.meaning, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(16.dp))
+                }
             }
             if (state.example.isNotBlank()) {
                 item {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    Spacer(Modifier.height(14.dp))
                     Text(
                         "Example",
                         style = MaterialTheme.typography.labelLarge,
@@ -149,8 +145,7 @@ fun VocabularyDetailScreen(
                     Spacer(Modifier.height(6.dp))
                     Text(
                         state.example,
-                        fontStyle = FontStyle.Italic,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
             }

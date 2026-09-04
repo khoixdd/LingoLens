@@ -7,7 +7,7 @@ import androidx.compose.ui.unit.dp
 val LingoLensShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
     small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(20.dp),
-    extraLarge = RoundedCornerShape(24.dp),
+    medium = RoundedCornerShape(14.dp),
+    large = RoundedCornerShape(17.dp),
+    extraLarge = RoundedCornerShape(20.dp),
 )

@@ -8,6 +8,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun SectionHeader(
@@ -16,7 +18,7 @@ fun SectionHeader(
     action: (@Composable () -> Unit)? = null,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().height(48.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))

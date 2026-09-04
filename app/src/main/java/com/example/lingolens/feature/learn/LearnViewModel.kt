@@ -4,18 +4,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lingolens.domain.model.MasteryLevel
 import com.example.lingolens.domain.repository.VocabularyRepository
+import com.example.lingolens.domain.repository.DailyActivityRepository
+import com.example.lingolens.domain.model.DEFAULT_DAILY_GOAL
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class LearnViewModel @Inject constructor(
     private val repository: VocabularyRepository,
+    dailyActivityRepository: DailyActivityRepository,
 ) : ViewModel() {
+
+    private val todayEpochDay = java.time.LocalDate.now().toEpochDay()
 
     init {
         viewModelScope.launch {
@@ -23,7 +28,10 @@ class LearnViewModel @Inject constructor(
         }
     }
 
-    val uiState: StateFlow<LearnUiState> = repository.getAllVocabulary().map { allWords ->
+    val uiState: StateFlow<LearnUiState> = combine(
+        repository.getAllVocabulary(),
+        dailyActivityRepository.observeUniqueWords(todayEpochDay),
+    ) { allWords, dailyWords ->
         val now = System.currentTimeMillis()
         val dueForReview = allWords.count { word ->
             word.nextReviewAt == null || word.nextReviewAt <= now
@@ -34,14 +42,15 @@ class LearnViewModel @Inject constructor(
         val masteredWords = allWords.count { it.masteryLevel == MasteryLevel.Mastered }
 
         LearnUiState(
+            isLoading = false,
             reviewCount = dueForReview,
             notebookCount = allWords.size,
             newCount = newWords,
             learningCount = learningWords,
             familiarCount = familiarWords,
             masteredCount = masteredWords,
-            dailyGoalCompleted = (allWords.size - dueForReview).coerceAtLeast(0),
-            dailyGoalTarget = 10,
+            dailyGoalCompleted = dailyWords,
+            dailyGoalTarget = DEFAULT_DAILY_GOAL,
         )
     }.stateIn(
         scope = viewModelScope,

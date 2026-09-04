@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -12,6 +13,8 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,11 +55,11 @@ fun PrivacySettingsScreen(
     ) { insets ->
         LazyColumn(
             Modifier.fillMaxSize().padding(insets),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
-                LingoLensCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
+                Column {
                     SettingToggleRow(
                         title = "Share my location",
                         checked = state.shareLocation,
@@ -78,22 +81,27 @@ fun PrivacySettingsScreen(
                     }
                 }
             }
-            item { SectionHeader("Privacy controls") }
             item {
-                LingoLensCard(contentPadding = PaddingValues(vertical = 4.dp)) {
-                    ProfileMenuItem(
-                        "Who can see me: ${state.visibility}",
-                        Icons.Outlined.Visibility,
-                        { onAction(PrivacySettingsAction.ChangeVisibility) },
-                    )
-                    ProfileMenuItem(
-                        "Location permission: ${state.locationPermission}",
-                        Icons.Outlined.LocationOn,
-                        { onAction(PrivacySettingsAction.OpenPermission) },
-                        showDivider = false,
-                    )
+                Column {
+                    PrivacyValueRow("Who can see me", state.visibility) { onAction(PrivacySettingsAction.ChangeVisibility) }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    PrivacyValueRow("Location permission", state.locationPermission) { onAction(PrivacySettingsAction.OpenPermission) }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PrivacyValueRow(title: String, value: String, onClick: () -> Unit) {
+    androidx.compose.material3.Surface(onClick = onClick, color = androidx.compose.ui.graphics.Color.Transparent) {
+        Row(
+            Modifier.fillMaxWidth().padding(vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+            Text(value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.primary)
         }
     }
 }

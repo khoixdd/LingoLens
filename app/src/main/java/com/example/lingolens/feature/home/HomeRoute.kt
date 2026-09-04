@@ -9,6 +9,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun HomeRoute(
     onOpenLearn: () -> Unit,
     onOpenReview: () -> Unit,
+    onOpenNotifications: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -18,6 +19,7 @@ fun HomeRoute(
             when (action) {
                 HomeAction.OpenLearn -> onOpenLearn()
                 HomeAction.OpenReview -> onOpenReview()
+                HomeAction.OpenNotifications -> onOpenNotifications()
             }
         },
     )

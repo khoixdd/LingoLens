@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -18,6 +19,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -48,13 +51,30 @@ fun NotificationSettingsScreen(
             )
         },
     ) { insets ->
+        if (state.isLoading) {
+            Box(Modifier.fillMaxSize().padding(insets), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
         LazyColumn(
             Modifier.fillMaxSize().padding(insets),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            if (state.permissionDenied) {
+                item {
+                    LingoLensCard(containerColor = MaterialTheme.colorScheme.errorContainer) {
+                        Text(
+                            "Notification permission was denied. Reminders remain off until permission is granted.",
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            }
             item {
-                LingoLensCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
+                Column(Modifier.fillMaxWidth()) {
                     SettingToggleRow(
                         title = "Daily reminder",
                         checked = state.dailyReminder,
@@ -84,20 +104,11 @@ fun NotificationSettingsScreen(
                 }
             }
             item {
-                LingoLensCard(contentPadding = PaddingValues(14.dp)) {
+                Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Outlined.AccessTime, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                            Text("Reminder time", style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                state.reminderTime,
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.labelLarge,
-                            )
-                        }
-                        TextButton(onClick = { onAction(NotificationSettingsAction.ChangeReminderTime) }) {
-                            Text("Change")
-                        }
+                        Icon(Icons.Outlined.AccessTime, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Text("Reminder Time", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).padding(start = 12.dp))
+                        TextButton(onClick = { onAction(NotificationSettingsAction.ChangeReminderTime) }) { Text(state.reminderTime) }
                     }
                 }
             }

@@ -16,10 +16,12 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.entryProvider
@@ -27,6 +29,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.example.lingolens.feature.auth.WelcomeScreen
+import com.example.lingolens.feature.auth.SplashScreen
 import com.example.lingolens.feature.auth.login.LoginRoute
 import com.example.lingolens.feature.auth.register.RegisterRoute
 import com.example.lingolens.feature.community.CommunityRoute
@@ -40,11 +43,18 @@ import com.example.lingolens.feature.learn.review.ReviewRoute
 import com.example.lingolens.feature.profile.ProfileRoute
 import com.example.lingolens.feature.profile.notification.NotificationSettingsRoute
 import com.example.lingolens.feature.profile.privacy.PrivacySettingsRoute
+import com.example.lingolens.feature.profile.achievements.AchievementsRoute
+import com.example.lingolens.feature.progress.StatisticsRoute
 import com.example.lingolens.feature.scan.ScanRoute
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun LingoLensApp() {
-    val backStack = rememberNavBackStack(Home)
+    val context = LocalContext.current
+    val onboardingPreferences = remember {
+        context.getSharedPreferences("lingolens_onboarding", android.content.Context.MODE_PRIVATE)
+    }
+    val backStack = rememberNavBackStack(Splash)
     val current = backStack.lastOrNull()
     val showBottomBar = current == Home || current == Scan || current == Learn ||
         current == Community || current == Profile
@@ -61,7 +71,7 @@ fun LingoLensApp() {
                     unselectedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 NavigationBar(
-                    modifier = Modifier.fillMaxWidth().height(72.dp).drawBehind {
+                    modifier = Modifier.fillMaxWidth().height(64.dp).drawBehind {
                         drawLine(
                             color = dividerColor,
                             start = Offset.Zero,
@@ -120,10 +130,27 @@ fun LingoLensApp() {
                 rememberViewModelStoreNavEntryDecorator(),
             ),
             entryProvider = entryProvider {
+                entry<Splash> {
+                    SplashScreen(
+                        onFinished = {
+                            val onboardingCompleted = onboardingPreferences.getBoolean("completed", false)
+                            val currentUser = runCatching {
+                                FirebaseAuth.getInstance().currentUser
+                            }.getOrNull()
+                            val nextDestination = when {
+                                !onboardingCompleted -> Welcome
+                                currentUser != null -> Home
+                                else -> Login
+                            }
+                            backStack.openRoot(nextDestination)
+                        },
+                    )
+                }
                 entry<Home> {
                     HomeRoute(
                         onOpenLearn = { backStack.openRoot(Learn) },
                         onOpenReview = { backStack.add(Review) },
+                        onOpenNotifications = { backStack.add(NotificationSettings) },
                     )
                 }
                 entry<Scan> {
@@ -134,6 +161,7 @@ fun LingoLensApp() {
                         onOpenNotebook = { backStack.add(Notebook) },
                         onStartReview = { backStack.add(Review) },
                         onStartQuiz = { backStack.add(Quiz(System.currentTimeMillis())) },
+                        onOpenStatistics = { backStack.add(Statistics) },
                     )
                 }
                 entry<Community> {
@@ -173,18 +201,38 @@ fun LingoLensApp() {
                     ProfileRoute(
                         onOpenMyWords = { backStack.add(Notebook) },
                         onOpenNotifications = { backStack.add(NotificationSettings) },
+                        onOpenAchievements = { backStack.add(Achievements) },
+                        onOpenStatistics = { backStack.add(Statistics) },
                         onOpenPrivacy = { backStack.add(PrivacySettings) },
-                        onLogout = { backStack.openRoot(Login) },
+                        onLogout = {
+                            runCatching { FirebaseAuth.getInstance().signOut() }
+                            backStack.openRoot(Login)
+                        },
                     )
                 }
                 entry<NotificationSettings> {
                     NotificationSettingsRoute(onBack = { backStack.removeLastOrNull() })
                 }
+                entry<Statistics> {
+                    StatisticsRoute(onBack = { backStack.removeLastOrNull() })
+                }
+                entry<Achievements> {
+                    AchievementsRoute(onBack = { backStack.removeLastOrNull() })
+                }
                 entry<PrivacySettings> {
                     PrivacySettingsRoute(onBack = { backStack.removeLastOrNull() })
                 }
                 entry<Welcome> {
-                    WelcomeScreen(onContinue = { backStack.add(Login) })
+                    WelcomeScreen(
+                        onGetStarted = {
+                            onboardingPreferences.edit().putBoolean("completed", true).apply()
+                            backStack.openRoot(Login)
+                        },
+                        onSignIn = {
+                            onboardingPreferences.edit().putBoolean("completed", true).apply()
+                            backStack.openRoot(Login)
+                        },
+                    )
                 }
                 entry<Login> {
                     LoginRoute(
@@ -195,7 +243,7 @@ fun LingoLensApp() {
                 entry<Register> {
                     RegisterRoute(
                         onRegisterSuccess = { backStack.openRoot(Home) },
-                        onNavigateToLogin = { backStack.removeLastOrNull() },
+                        onNavigateToLogin = { backStack.openRoot(Login) },
                     )
                 }
             },

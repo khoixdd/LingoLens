@@ -1,6 +1,8 @@
 package com.example.lingolens.data.repository
 
 import android.content.Context
+import android.os.SystemClock
+import android.util.Log
 import com.example.lingolens.domain.model.AuthUser
 import com.example.lingolens.domain.repository.AuthRepository
 import com.google.firebase.FirebaseApp
@@ -33,9 +35,11 @@ class AuthRepositoryImpl @Inject constructor(
 
     override fun getCurrentUser(): AuthUser? {
         val user = auth?.currentUser ?: return null
+        val emailPrefix = user.email?.substringBefore("@").orEmpty()
+        val displayName = user.displayName.orEmpty().ifBlank { emailPrefix }.ifBlank { "Learner" }
         return AuthUser(
             uid = user.uid,
-            displayName = user.displayName.orEmpty().ifBlank { user.email?.substringBefore("@").orEmpty() },
+            displayName = displayName,
             email = user.email.orEmpty(),
             photoUrl = user.photoUrl?.toString().orEmpty(),
         )
@@ -52,10 +56,12 @@ class AuthRepositoryImpl @Inject constructor(
         val listener = FirebaseAuth.AuthStateListener { firebase ->
             val user = firebase.currentUser
             if (user != null) {
+                val emailPrefix = user.email?.substringBefore("@").orEmpty()
+                val displayName = user.displayName.orEmpty().ifBlank { emailPrefix }.ifBlank { "Learner" }
                 trySend(
                     AuthUser(
                         uid = user.uid,
-                        displayName = user.displayName.orEmpty().ifBlank { user.email?.substringBefore("@").orEmpty() },
+                        displayName = displayName,
                         email = user.email.orEmpty(),
                         photoUrl = user.photoUrl?.toString().orEmpty(),
                     ),
@@ -70,18 +76,23 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun loginWithEmail(email: String, password: String): Result<AuthUser> {
         val firebaseAuth = auth ?: return Result.failure(IllegalStateException("Firebase Auth not initialized"))
+        val startedAt = SystemClock.elapsedRealtime()
         return try {
             val result = firebaseAuth.signInWithEmailAndPassword(email.trim(), password).await()
             val user = result.user ?: return Result.failure(IllegalStateException("User is null after sign in"))
+            val emailPrefix = user.email?.substringBefore("@").orEmpty()
+            val displayName = user.displayName.orEmpty().ifBlank { emailPrefix }.ifBlank { "Learner" }
+            Log.d(TAG, "Email authentication completed in ${SystemClock.elapsedRealtime() - startedAt} ms")
             Result.success(
                 AuthUser(
                     uid = user.uid,
-                    displayName = user.displayName.orEmpty().ifBlank { user.email?.substringBefore("@").orEmpty() },
+                    displayName = displayName,
                     email = user.email.orEmpty(),
                     photoUrl = user.photoUrl?.toString().orEmpty(),
                 ),
             )
         } catch (e: Exception) {
+            Log.w(TAG, "Email authentication failed after ${SystemClock.elapsedRealtime() - startedAt} ms", e)
             Result.failure(e)
         }
     }
@@ -96,9 +107,10 @@ class AuthRepositoryImpl @Inject constructor(
             val result = firebaseAuth.createUserWithEmailAndPassword(email.trim(), password).await()
             val user = result.user ?: return Result.failure(IllegalStateException("User is null after registration"))
 
-            if (username.isNotBlank()) {
+            val finalUsername = username.ifBlank { email.substringBefore("@") }
+            if (finalUsername.isNotBlank()) {
                 val profileUpdate = UserProfileChangeRequest.Builder()
-                    .setDisplayName(username.trim())
+                    .setDisplayName(finalUsername.trim())
                     .build()
                 runCatching { user.updateProfile(profileUpdate).await() }
             }
@@ -106,36 +118,46 @@ class AuthRepositoryImpl @Inject constructor(
             Result.success(
                 AuthUser(
                     uid = user.uid,
-                    displayName = username.ifBlank { user.email?.substringBefore("@").orEmpty() },
+                    displayName = finalUsername,
                     email = user.email.orEmpty(),
                     photoUrl = user.photoUrl?.toString().orEmpty(),
                 ),
             )
         } catch (e: Exception) {
+            Log.w(TAG, "Registration failed", e)
             Result.failure(e)
         }
     }
 
     override suspend fun loginWithGoogle(idToken: String): Result<AuthUser> {
         val firebaseAuth = auth ?: return Result.failure(IllegalStateException("Firebase Auth not initialized"))
+        val startedAt = SystemClock.elapsedRealtime()
         return try {
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             val result = firebaseAuth.signInWithCredential(credential).await()
             val user = result.user ?: return Result.failure(IllegalStateException("User is null after Google sign in"))
+            val emailPrefix = user.email?.substringBefore("@").orEmpty()
+            val displayName = user.displayName.orEmpty().ifBlank { emailPrefix }.ifBlank { "Learner" }
+            Log.d(TAG, "Google authentication completed in ${SystemClock.elapsedRealtime() - startedAt} ms")
             Result.success(
                 AuthUser(
                     uid = user.uid,
-                    displayName = user.displayName.orEmpty().ifBlank { user.email?.substringBefore("@").orEmpty() },
+                    displayName = displayName,
                     email = user.email.orEmpty(),
                     photoUrl = user.photoUrl?.toString().orEmpty(),
                 ),
             )
         } catch (e: Exception) {
+            Log.w(TAG, "Google authentication failed after ${SystemClock.elapsedRealtime() - startedAt} ms", e)
             Result.failure(e)
         }
     }
 
     override suspend fun logout() {
         auth?.signOut()
+    }
+
+    private companion object {
+        const val TAG = "AuthRepository"
     }
 }

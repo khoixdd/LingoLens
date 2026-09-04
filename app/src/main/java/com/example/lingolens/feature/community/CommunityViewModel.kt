@@ -2,17 +2,19 @@ package com.example.lingolens.feature.community
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lingolens.domain.model.LeaderboardLoadState
+import com.example.lingolens.domain.model.UserProfile
 import com.example.lingolens.domain.repository.AuthRepository
 import com.example.lingolens.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -22,8 +24,6 @@ class CommunityViewModel @Inject constructor(
     private val userRepository: UserRepository,
 ) : ViewModel() {
 
-    private val selectedPeriod = MutableStateFlow(LeaderboardPeriod.ThisWeek)
-
     val uiState: StateFlow<CommunityUiState> = combine(
         authRepository.observeAuthState().flatMapLatest { authUser ->
             if (authUser != null) {
@@ -31,50 +31,58 @@ class CommunityViewModel @Inject constructor(
             } else {
                 flowOf(null)
             }
-        },
-        selectedPeriod,
-    ) { userProfile, period ->
+        }.onStart { emit(null) },
+        userRepository.observeLeaderboard(),
+    ) { userProfile: UserProfile?, leaderboardState: LeaderboardLoadState ->
         val authUser = authRepository.getCurrentUser()
+        val currentUid = authUser?.uid.orEmpty()
+        val emailPrefix = authUser?.email?.substringBefore("@").orEmpty()
         val currentName = userProfile?.username.orEmpty()
             .ifBlank { authUser?.displayName.orEmpty() }
-            .ifBlank { "Learner" }
-        val currentXp = userProfile?.xp ?: 100
-        val currentLevel = userProfile?.level ?: 1
-        val currentStreak = userProfile?.streakDays ?: 1
+            .ifBlank { emailPrefix }
 
-        val currentUserEntry = LeaderboardEntry(
-            rank = 4,
-            name = currentName,
-            level = currentLevel,
-            xp = if (period == LeaderboardPeriod.ThisWeek) currentXp else currentXp * 8,
-            streakDays = currentStreak,
-            isCurrentUser = true,
-        )
-
-        val rawList = listOf(
-            LeaderboardEntry(1, "Minh", 12, if (period == LeaderboardPeriod.ThisWeek) 2480 else 19840, 21),
-            LeaderboardEntry(2, "An", 10, if (period == LeaderboardPeriod.ThisWeek) 2210 else 17680, 18),
-            LeaderboardEntry(3, "Khoi", 9, if (period == LeaderboardPeriod.ThisWeek) 1980 else 15840, 16),
-            currentUserEntry,
-            LeaderboardEntry(5, "Lan", 6, if (period == LeaderboardPeriod.ThisWeek) 1340 else 10720, 9),
-        )
-
-        val sortedList = rawList.sortedByDescending { it.xp }
-            .mapIndexed { index, entry -> entry.copy(rank = index + 1) }
-
-        CommunityUiState(
-            selectedPeriod = period,
-            leaderboard = sortedList,
-        )
+        when (leaderboardState) {
+            LeaderboardLoadState.Loading -> CommunityUiState(isLeaderboardLoading = true)
+            is LeaderboardLoadState.Error -> CommunityUiState(
+                isLeaderboardLoading = false,
+                leaderboardError = leaderboardState.message,
+            )
+            is LeaderboardLoadState.Data -> {
+                val mergedProfiles = leaderboardState.users.associateByTo(mutableMapOf()) { it.uid }
+                if (currentUid.isNotBlank() && userProfile != null) {
+                    mergedProfiles[currentUid] = UserProfile(
+                        uid = currentUid,
+                        username = currentName.ifBlank { "Learner" },
+                        email = userProfile?.email.orEmpty().ifBlank { authUser?.email.orEmpty() },
+                        avatarUrl = userProfile?.avatarUrl.orEmpty(),
+                        xp = userProfile?.xp ?: 100,
+                        level = userProfile?.level ?: 1,
+                        streakDays = userProfile?.streakDays ?: 1,
+                    )
+                }
+                CommunityUiState(
+                    leaderboard = mergedProfiles.values
+                        .sortedByDescending { it.xp }
+                        .mapIndexed { index, profile ->
+                            val isCurrent = profile.uid == currentUid
+                            LeaderboardEntry(
+                                rank = index + 1,
+                                name = if (isCurrent && currentName.isNotBlank()) currentName else profile.username,
+                                level = profile.level,
+                                xp = profile.xp,
+                                streakDays = profile.streakDays,
+                                isCurrentUser = isCurrent,
+                            )
+                        },
+                    isLeaderboardLoading = false,
+                    hasLeaderboardData = true,
+                    isLeaderboardFromCache = leaderboardState.isFromCache,
+                )
+            }
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = CommunityUiState(),
     )
-
-    fun onAction(action: CommunityAction) {
-        when (action) {
-            is CommunityAction.SelectPeriod -> selectedPeriod.value = action.period
-        }
-    }
 }
