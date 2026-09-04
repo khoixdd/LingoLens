@@ -25,7 +25,7 @@ import androidx.compose.material.icons.outlined.Navigation
 import androidx.compose.material.icons.outlined.PersonPinCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -59,7 +59,6 @@ import com.google.maps.android.compose.rememberCameraPositionState
 @Composable
 fun CommunityScreen(
     state: CommunityUiState,
-    onAction: (CommunityAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -76,19 +75,8 @@ fun CommunityScreen(
             )
         }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                LeaderboardPeriod.entries.forEach { period ->
-                    FilterChip(
-                        selected = state.selectedPeriod == period,
-                        onClick = { onAction(CommunityAction.SelectPeriod(period)) },
-                        label = { Text(period.label) },
-                    )
-                }
-            }
-        }
-        item {
             SectionHeader(
-                title = "Leaderboard",
+                title = "Global leaderboard",
                 action = {
                     Icon(
                         Icons.Outlined.EmojiEvents,
@@ -100,13 +88,30 @@ fun CommunityScreen(
         }
         item {
             LingoLensCard(contentPadding = PaddingValues(vertical = 4.dp)) {
-                state.leaderboard.forEachIndexed { index, entry ->
-                    LeaderboardRow(entry)
-                    if (index != state.leaderboard.lastIndex) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                        )
+                when {
+                    state.isLeaderboardLoading -> Box(
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        contentAlignment = Alignment.Center,
+                    ) { CircularProgressIndicator() }
+                    state.leaderboardError != null -> Text(
+                        text = state.leaderboardError,
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    state.leaderboard.isEmpty() -> Text(
+                        text = "No learners have joined the leaderboard yet.",
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    else -> state.leaderboard.forEachIndexed { index, entry ->
+                        LeaderboardRow(entry)
+                        if (index != state.leaderboard.lastIndex) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant,
+                            )
+                        }
                     }
                 }
             }
@@ -429,6 +434,6 @@ private fun LeaderboardRow(entry: LeaderboardEntry) {
 @Composable
 private fun CommunityScreenPreview() {
     LingoLensTheme(darkTheme = false) {
-        CommunityScreen(state = CommunityUiState(), onAction = {})
+        CommunityScreen(state = CommunityUiState(isLeaderboardLoading = false))
     }
 }

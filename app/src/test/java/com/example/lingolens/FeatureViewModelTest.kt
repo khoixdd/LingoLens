@@ -3,6 +3,7 @@ package com.example.lingolens
 import com.example.lingolens.core.common.TextToSpeechHelper
 import com.example.lingolens.domain.model.AuthUser
 import com.example.lingolens.domain.model.MasteryLevel
+import com.example.lingolens.domain.model.LeaderboardLoadState
 import com.example.lingolens.domain.model.UserProfile
 import com.example.lingolens.domain.model.Vocabulary
 import com.example.lingolens.domain.repository.AuthRepository
@@ -10,9 +11,7 @@ import com.example.lingolens.domain.repository.LocationRepository
 import com.example.lingolens.domain.repository.UserLocation
 import com.example.lingolens.domain.repository.UserRepository
 import com.example.lingolens.domain.repository.VocabularyRepository
-import com.example.lingolens.feature.community.CommunityAction
 import com.example.lingolens.feature.community.CommunityViewModel
-import com.example.lingolens.feature.community.LeaderboardPeriod
 import com.example.lingolens.feature.home.HomeViewModel
 import com.example.lingolens.feature.learn.notebook.NotebookAction
 import com.example.lingolens.feature.learn.notebook.NotebookContentState
@@ -34,6 +33,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -112,10 +112,12 @@ class FakeUserRepository : UserRepository {
     )
 
     override fun observeUserProfile(uid: String): Flow<UserProfile?> = profileFlow
-    override fun observeLeaderboard(): Flow<List<UserProfile>> = profileFlow.map { listOfNotNull(it) }
+    override fun observeLeaderboard(): Flow<LeaderboardLoadState> = profileFlow.map {
+        LeaderboardLoadState.Data(listOfNotNull(it))
+    }
     override fun observeNearbyLearners(): Flow<List<UserProfile>> = profileFlow.map { listOfNotNull(it) }
     override suspend fun getUserProfile(uid: String): UserProfile? = profileFlow.value
-    override suspend fun syncUserProfileOnLogin(user: AuthUser) {}
+    override fun syncUserProfileOnLogin(user: AuthUser) {}
     override suspend fun addXp(uid: String, xpAmount: Int) {
         profileFlow.update {
             it?.copy(
@@ -178,13 +180,9 @@ class FeatureViewModelTest {
             authRepository,
             userRepository,
         )
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
-        assertEquals(LeaderboardPeriod.ThisWeek, viewModel.uiState.value.selectedPeriod)
-        assertEquals("Alex", viewModel.uiState.value.leaderboard.first { it.isCurrentUser }.name)
-
-        viewModel.onAction(CommunityAction.SelectPeriod(LeaderboardPeriod.AllTime))
-        assertEquals(LeaderboardPeriod.AllTime, viewModel.uiState.value.selectedPeriod)
+        val state = viewModel.uiState.first { !it.isLeaderboardLoading }
+        assertTrue(state.hasLeaderboardData)
+        assertEquals("Alex", state.leaderboard.first { it.isCurrentUser }.name)
     }
 
     @Test

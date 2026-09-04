@@ -25,9 +25,7 @@ class LoginViewModel @Inject constructor(
         val currentUser = authRepository.getCurrentUser()
         if (currentUser != null) {
             _uiState.update { it.copy(isLoggedIn = true) }
-            viewModelScope.launch {
-                userRepository.syncUserProfileOnLogin(currentUser)
-            }
+            userRepository.syncUserProfileOnLogin(currentUser)
         }
     }
 

@@ -1,10 +1,5 @@
 package com.example.lingolens.feature.community
 
-enum class LeaderboardPeriod(val label: String) {
-    ThisWeek("This Week"),
-    AllTime("All Time"),
-}
-
 data class LeaderboardEntry(
     val rank: Int,
     val name: String,
@@ -15,17 +10,9 @@ data class LeaderboardEntry(
 )
 
 data class CommunityUiState(
-    val selectedPeriod: LeaderboardPeriod = LeaderboardPeriod.ThisWeek,
-    val leaderboard: List<LeaderboardEntry> = sampleWeeklyLeaderboard,
+    val leaderboard: List<LeaderboardEntry> = emptyList(),
+    val isLeaderboardLoading: Boolean = true,
+    val hasLeaderboardData: Boolean = false,
+    val isLeaderboardFromCache: Boolean = false,
+    val leaderboardError: String? = null,
 )
-
-val sampleWeeklyLeaderboard = listOf(
-    LeaderboardEntry(1, "User A", 11, 2100, 15),
-    LeaderboardEntry(2, "User B", 10, 1850, 12),
-    LeaderboardEntry(3, "User C", 9, 1700, 9),
-    LeaderboardEntry(4, "Learner", 1, 100, 1, isCurrentUser = true),
-)
-
-val sampleAllTimeLeaderboard = sampleWeeklyLeaderboard.map { entry ->
-    entry.copy(xp = entry.xp * 8)
-}
