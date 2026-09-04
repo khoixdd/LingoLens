@@ -9,7 +9,7 @@ import com.example.lingolens.data.local.entity.VocabularyEntity
 
 @Database(
     entities = [VocabularyEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 @TypeConverters(VocabularyConverters::class)
