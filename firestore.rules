@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      // Signed-in learners can read the global leaderboard.
+      allow get, list: if request.auth != null;
+
+      // A learner can create or update only their own profile document.
+      allow create, update: if request.auth != null
+                            && request.auth.uid == userId;
+
+      allow delete: if false;
+    }
+  }
+}
