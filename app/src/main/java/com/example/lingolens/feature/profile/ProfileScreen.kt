@@ -47,15 +47,14 @@ fun ProfileScreen(
     }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { Text("Profile", style = MaterialTheme.typography.headlineMedium) }
         item {
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size(82.dp)
+                        .size(64.dp)
                         .clip(androidx.compose.foundation.shape.CircleShape)
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center,
@@ -66,16 +65,14 @@ fun ProfileScreen(
                         color = MaterialTheme.colorScheme.primary,
                     )
                 }
-                Text(
-                    state.name,
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(top = 10.dp),
-                )
-                Text(
-                    if (state.email.isNotBlank()) state.email else "@${state.name.lowercase()}",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                Column(Modifier.padding(start = 14.dp)) {
+                    Text(state.name, style = MaterialTheme.typography.headlineSmall)
+                    Text(
+                        "@${state.email.substringBefore("@").ifBlank { state.name.lowercase().replace(" ", "_") }}",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
         }
         item {

@@ -175,13 +175,6 @@ fun ScanScreen(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     style = MaterialTheme.typography.titleMedium,
                                 )
-                                Text(
-                                    text = "Keep the words inside the frame",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    textAlign = TextAlign.Center,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    modifier = Modifier.padding(top = 6.dp),
-                                )
                             }
                         }
                     }
@@ -238,14 +231,7 @@ fun ScanScreen(
                         }
                     }
                 }
-                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        IconButton(onClick = { onAction(ScanAction.OpenGallery) }) {
-                            Icon(Icons.Outlined.PhotoLibrary, contentDescription = "Open gallery", tint = previewContentColor)
-                        }
-                        Text("Gallery", color = previewContentColor, style = MaterialTheme.typography.labelMedium)
-                    }
-                }
+                Box(Modifier.weight(1f))
             }
         }
 

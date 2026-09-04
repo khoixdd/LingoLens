@@ -1,6 +1,7 @@
 package com.example.lingolens.notification
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -59,6 +60,7 @@ class NotificationHelper @Inject constructor(
         message = name,
     )
 
+    @SuppressLint("MissingPermission")
     private fun show(id: Int, channelId: String, title: String, message: String) {
         if (!canPostNotifications()) return
         val intent = Intent(context, MainActivity::class.java)
@@ -86,4 +88,3 @@ class NotificationHelper @Inject constructor(
         const val ACHIEVEMENT_NOTIFICATION_BASE = 2000
     }
 }
-

@@ -20,6 +20,7 @@ sealed interface LingoLensDestination : NavKey
 @Serializable data object Statistics : LingoLensDestination
 @Serializable data object Achievements : LingoLensDestination
 @Serializable data object PrivacySettings : LingoLensDestination
+@Serializable data object Splash : LingoLensDestination
 @Serializable data object Welcome : LingoLensDestination
 @Serializable data object Login : LingoLensDestination
 @Serializable data object Register : LingoLensDestination

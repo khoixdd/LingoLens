@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -20,6 +21,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,6 +29,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.example.lingolens.ui.components.LingoLensCard
 
@@ -50,14 +53,27 @@ fun AchievementsScreen(state: AchievementsUiState, onAction: (AchievementsAction
         } else {
             LazyColumn(
                 Modifier.fillMaxSize().padding(insets),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                item {
+                    val unlocked = state.achievements.count { it.isUnlocked }
+                    LingoLensCard(containerColor = MaterialTheme.colorScheme.primaryContainer) {
+                        Row(Modifier.fillMaxWidth()) {
+                            Text("Your progress", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                            Text("$unlocked / ${state.achievements.size}", color = MaterialTheme.colorScheme.primary)
+                        }
+                        LinearProgressIndicator(
+                            progress = { if (state.achievements.isEmpty()) 0f else unlocked.toFloat() / state.achievements.size },
+                            modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(6.dp).clip(CircleShape),
+                        )
+                    }
+                }
                 items(state.achievements.size) { index ->
                     val item = state.achievements[index]
                     LingoLensCard(
                         containerColor = if (item.isUnlocked) MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surface,
+                        else MaterialTheme.colorScheme.surfaceVariant,
                         contentPadding = PaddingValues(16.dp),
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -89,4 +105,3 @@ fun AchievementsScreen(state: AchievementsUiState, onAction: (AchievementsAction
         }
     }
 }
-

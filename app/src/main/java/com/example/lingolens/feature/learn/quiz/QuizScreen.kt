@@ -51,7 +51,7 @@ fun QuizScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Quiz") },
+                title = {},
                 navigationIcon = {
                     IconButton(onClick = { onAction(QuizAction.Back) }) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back")
@@ -118,6 +118,7 @@ fun QuizScreen(
                             state.word,
                             style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(top = 10.dp),
                         )
                     }

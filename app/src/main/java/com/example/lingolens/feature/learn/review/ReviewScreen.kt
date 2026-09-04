@@ -56,7 +56,7 @@ fun ReviewScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Review") },
+                title = {},
                 navigationIcon = {
                     IconButton(onClick = { onAction(ReviewAction.Back) }) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back")
@@ -181,7 +181,7 @@ fun ReviewScreen(
                                 rotationY = rotation
                                 cameraDistance = 12f * density
                             }
-                            .clickable(enabled = !state.isRevealed) {
+                            .clickable {
                                 onAction(ReviewAction.Reveal)
                             },
                         contentPadding = PaddingValues(20.dp),
@@ -196,6 +196,7 @@ fun ReviewScreen(
                                     state.word,
                                     style = MaterialTheme.typography.headlineLarge,
                                     fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
                                     textAlign = TextAlign.Center,
                                 )
                                 if (state.pronunciation.isNotBlank()) {
@@ -226,6 +227,7 @@ fun ReviewScreen(
                                     state.word,
                                     style = MaterialTheme.typography.headlineLarge,
                                     fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
                                     textAlign = TextAlign.Center,
                                 )
                                 if (state.pronunciation.isNotBlank()) {
@@ -285,13 +287,6 @@ fun ReviewScreen(
                                     }
                                 }
                             }
-                        }
-                    } else {
-                        Button(
-                            onClick = { onAction(ReviewAction.Reveal) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text("Reveal answer")
                         }
                     }
                 }

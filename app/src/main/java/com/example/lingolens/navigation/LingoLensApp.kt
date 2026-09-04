@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.entryProvider
@@ -28,6 +29,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.example.lingolens.feature.auth.WelcomeScreen
+import com.example.lingolens.feature.auth.SplashScreen
 import com.example.lingolens.feature.auth.login.LoginRoute
 import com.example.lingolens.feature.auth.register.RegisterRoute
 import com.example.lingolens.feature.community.CommunityRoute
@@ -48,11 +50,11 @@ import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun LingoLensApp() {
-    val initialDestination: LingoLensDestination = remember {
-        val currentUser = runCatching { FirebaseAuth.getInstance().currentUser }.getOrNull()
-        if (currentUser != null) Home else Login
+    val context = LocalContext.current
+    val onboardingPreferences = remember {
+        context.getSharedPreferences("lingolens_onboarding", android.content.Context.MODE_PRIVATE)
     }
-    val backStack = rememberNavBackStack(initialDestination)
+    val backStack = rememberNavBackStack(Splash)
     val current = backStack.lastOrNull()
     val showBottomBar = current == Home || current == Scan || current == Learn ||
         current == Community || current == Profile
@@ -69,7 +71,7 @@ fun LingoLensApp() {
                     unselectedTextColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 NavigationBar(
-                    modifier = Modifier.fillMaxWidth().height(72.dp).drawBehind {
+                    modifier = Modifier.fillMaxWidth().height(64.dp).drawBehind {
                         drawLine(
                             color = dividerColor,
                             start = Offset.Zero,
@@ -128,6 +130,22 @@ fun LingoLensApp() {
                 rememberViewModelStoreNavEntryDecorator(),
             ),
             entryProvider = entryProvider {
+                entry<Splash> {
+                    SplashScreen(
+                        onFinished = {
+                            val onboardingCompleted = onboardingPreferences.getBoolean("completed", false)
+                            val currentUser = runCatching {
+                                FirebaseAuth.getInstance().currentUser
+                            }.getOrNull()
+                            val nextDestination = when {
+                                !onboardingCompleted -> Welcome
+                                currentUser != null -> Home
+                                else -> Login
+                            }
+                            backStack.openRoot(nextDestination)
+                        },
+                    )
+                }
                 entry<Home> {
                     HomeRoute(
                         onOpenLearn = { backStack.openRoot(Learn) },
@@ -206,8 +224,14 @@ fun LingoLensApp() {
                 }
                 entry<Welcome> {
                     WelcomeScreen(
-                        onGetStarted = { backStack.add(Register) },
-                        onSignIn = { backStack.add(Login) },
+                        onGetStarted = {
+                            onboardingPreferences.edit().putBoolean("completed", true).apply()
+                            backStack.openRoot(Login)
+                        },
+                        onSignIn = {
+                            onboardingPreferences.edit().putBoolean("completed", true).apply()
+                            backStack.openRoot(Login)
+                        },
                     )
                 }
                 entry<Login> {
@@ -219,7 +243,7 @@ fun LingoLensApp() {
                 entry<Register> {
                     RegisterRoute(
                         onRegisterSuccess = { backStack.openRoot(Home) },
-                        onNavigateToLogin = { backStack.removeLastOrNull() },
+                        onNavigateToLogin = { backStack.openRoot(Login) },
                     )
                 }
             },

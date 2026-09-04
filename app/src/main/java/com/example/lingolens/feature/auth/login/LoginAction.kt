@@ -5,6 +5,7 @@ sealed interface LoginAction {
     data class PasswordChanged(val password: String) : LoginAction
     data object TogglePasswordVisibility : LoginAction
     data object SubmitLogin : LoginAction
+    data object GoogleSignInStarted : LoginAction
     data class GoogleSignInSuccess(val idToken: String) : LoginAction
     data class GoogleSignInError(val error: String) : LoginAction
     data object NavigateToRegister : LoginAction

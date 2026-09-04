@@ -90,15 +90,15 @@ fun NotebookScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                placeholder = { Text("Search words or meanings") },
+                placeholder = { Text("Search words...") },
                 leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
                 singleLine = true,
                 shape = MaterialTheme.shapes.medium,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
                 ),
             )
             LazyRow(
@@ -113,17 +113,11 @@ fun NotebookScreen(
                     )
                 }
             }
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(NotebookSortOption.entries) { sortOption ->
-                    FilterChip(
-                        selected = state.selectedSort == sortOption,
-                        onClick = { onAction(NotebookAction.SortSelected(sortOption)) },
-                        label = { Text("Sort: ${sortOption.label}") },
-                    )
-                }
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = {
+                    val options = NotebookSortOption.entries
+                    onAction(NotebookAction.SortSelected(options[(state.selectedSort.ordinal + 1) % options.size]))
+                }) { Text("Sort: ${state.selectedSort.label}", style = MaterialTheme.typography.labelMedium) }
             }
             when (val content = state.content) {
                 NotebookContentState.Loading -> Box(
@@ -189,13 +183,13 @@ private fun VocabularyCard(
         onClick = onClick,
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = null,
     ) {
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .padding(horizontal = 14.dp, vertical = 9.dp),
             verticalAlignment = Alignment.Top,
         ) {
             Column(

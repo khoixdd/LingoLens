@@ -1,6 +1,5 @@
 package com.example.lingolens.feature.learn
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,6 +26,8 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
@@ -50,70 +51,59 @@ fun LearnScreen(
     }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            Text("Learn", style = MaterialTheme.typography.headlineMedium)
-            Text(
-                "Build vocabulary one small session at a time.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            Text("Ready to learn?", style = MaterialTheme.typography.headlineMedium)
         }
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    LearningShortcut(
-                        modifier = Modifier.weight(1f),
-                        title = "Notebook",
-                        subtitle = "${state.notebookCount} words",
-                        icon = Icons.Outlined.AutoStories,
-                        onClick = { onAction(LearnAction.OpenNotebook) },
-                    )
-                    LearningShortcut(
-                        modifier = Modifier.weight(1f),
-                        title = "Review",
-                        subtitle = "${state.reviewCount} due",
-                        icon = Icons.Outlined.Refresh,
-                        onClick = { onAction(LearnAction.StartReview) },
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    LearningShortcut(
-                        modifier = Modifier.weight(1f),
-                        title = "Quiz",
-                        subtitle = "Practice",
-                        icon = Icons.Outlined.Quiz,
-                        onClick = { onAction(LearnAction.StartQuiz) },
-                    )
-                    LearningShortcut(
-                        modifier = Modifier.weight(1f),
-                        title = "Statistics",
-                        subtitle = "See progress",
-                        icon = Icons.Outlined.BarChart,
-                        onClick = { onAction(LearnAction.OpenStatistics) },
-                    )
+            LingoLensCard(containerColor = MaterialTheme.colorScheme.primaryContainer, contentPadding = PaddingValues(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Review Today", style = MaterialTheme.typography.titleMedium)
+                        Text("${state.reviewCount} words due", style = MaterialTheme.typography.bodySmall)
+                    }
+                    TextButton(onClick = { onAction(LearnAction.StartReview) }) {
+                        Text("Start Review")
+                        Icon(Icons.AutoMirrored.Outlined.ArrowForward, null, Modifier.size(16.dp))
+                    }
                 }
             }
         }
-        item { SectionHeader("Keep learning") }
         item {
-            LingoLensCard(containerColor = MaterialTheme.colorScheme.primaryContainer) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                LearningShortcut(
+                    modifier = Modifier.weight(1f),
+                    title = "Notebook",
+                    subtitle = "${state.notebookCount} words",
+                    icon = Icons.Outlined.AutoStories,
+                    onClick = { onAction(LearnAction.OpenNotebook) },
+                )
+                LearningShortcut(
+                    modifier = Modifier.weight(1f),
+                    title = "Quiz",
+                    subtitle = "Practice",
+                    icon = Icons.Outlined.Quiz,
+                    onClick = { onAction(LearnAction.StartQuiz) },
+                )
+            }
+        }
+        item {
+            LingoLensCard(contentPadding = PaddingValues(14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("Daily goal", style = MaterialTheme.typography.titleMedium)
+                        Text("Daily goal", style = MaterialTheme.typography.labelLarge)
                         Text(
                             "${state.dailyGoalCompleted} of ${state.dailyGoalTarget} words",
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
-                    Text(
-                        "${(state.dailyGoalCompleted * 100 / state.dailyGoalTarget.coerceAtLeast(1)).coerceIn(0, 100)}%",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
+                    TextButton(onClick = { onAction(LearnAction.OpenStatistics) }) {
+                        Icon(Icons.Outlined.BarChart, null, Modifier.size(18.dp))
+                        Text(" Statistics")
+                    }
                 }
                 Spacer(Modifier.height(10.dp))
                 LinearProgressIndicator(
@@ -121,19 +111,16 @@ fun LearnScreen(
                         (state.dailyGoalCompleted.toFloat() / state.dailyGoalTarget.coerceAtLeast(1)).coerceIn(0f, 1f)
                     },
                     modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
-                    trackColor = MaterialTheme.colorScheme.surface,
+                    trackColor = MaterialTheme.colorScheme.primaryContainer,
                 )
             }
         }
         item { SectionHeader("Learning status") }
         item {
-            LingoLensCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 2.dp)) {
                 LearningStatusRow("New", state.newCount)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 LearningStatusRow("Learning", state.learningCount)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 LearningStatusRow("Familiar", state.familiarCount)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 LearningStatusRow("Mastered", state.masteredCount)
             }
         }
@@ -152,7 +139,7 @@ private fun LearningShortcut(
         modifier = modifier.then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shadowElevation = 2.dp,
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
             Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {

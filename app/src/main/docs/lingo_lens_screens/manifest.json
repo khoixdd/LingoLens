@@ -1,0 +1,395 @@
+{
+  "source_file": "8fb5709f-17ad-4998-8e18-bc820ed38e16.png",
+  "source_dimensions": [
+    1536,
+    1024
+  ],
+  "source_mode": "RGBA",
+  "processing": "lossless crop only; no resize; saved as PNG",
+  "screens": [
+    {
+      "index": 1,
+      "filename": "01_splash.png",
+      "crop_box": [
+        20,
+        9,
+        191,
+        366
+      ],
+      "dimensions": [
+        171,
+        357
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 2,
+      "filename": "02_onboarding_learn_world.png",
+      "crop_box": [
+        199,
+        9,
+        369,
+        366
+      ],
+      "dimensions": [
+        170,
+        357
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 3,
+      "filename": "03_onboarding_personalize.png",
+      "crop_box": [
+        377,
+        9,
+        546,
+        366
+      ],
+      "dimensions": [
+        169,
+        357
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 4,
+      "filename": "04_onboarding_all_in_one.png",
+      "crop_box": [
+        555,
+        9,
+        724,
+        366
+      ],
+      "dimensions": [
+        169,
+        357
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 5,
+      "filename": "05_login.png",
+      "crop_box": [
+        733,
+        9,
+        905,
+        366
+      ],
+      "dimensions": [
+        172,
+        357
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 6,
+      "filename": "06_register.png",
+      "crop_box": [
+        914,
+        9,
+        1088,
+        366
+      ],
+      "dimensions": [
+        174,
+        357
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 7,
+      "filename": "07_home_dashboard.png",
+      "crop_box": [
+        1097,
+        9,
+        1326,
+        366
+      ],
+      "dimensions": [
+        229,
+        357
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 8,
+      "filename": "08_scan_camera.png",
+      "crop_box": [
+        1335,
+        9,
+        1514,
+        366
+      ],
+      "dimensions": [
+        179,
+        357
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 9,
+      "filename": "09_detected_text.png",
+      "crop_box": [
+        20,
+        397,
+        191,
+        725
+      ],
+      "dimensions": [
+        171,
+        328
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 10,
+      "filename": "10_word_translation_result.png",
+      "crop_box": [
+        199,
+        397,
+        369,
+        725
+      ],
+      "dimensions": [
+        170,
+        328
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 11,
+      "filename": "11_save_vocabulary.png",
+      "crop_box": [
+        377,
+        397,
+        546,
+        725
+      ],
+      "dimensions": [
+        169,
+        328
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 12,
+      "filename": "12_ready_to_learn.png",
+      "crop_box": [
+        555,
+        397,
+        724,
+        725
+      ],
+      "dimensions": [
+        169,
+        328
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 13,
+      "filename": "13_notebook.png",
+      "crop_box": [
+        733,
+        397,
+        905,
+        725
+      ],
+      "dimensions": [
+        172,
+        328
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 14,
+      "filename": "14_vocabulary_detail.png",
+      "crop_box": [
+        914,
+        397,
+        1088,
+        725
+      ],
+      "dimensions": [
+        174,
+        328
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 15,
+      "filename": "15_flashcard_front.png",
+      "crop_box": [
+        1097,
+        397,
+        1326,
+        725
+      ],
+      "dimensions": [
+        229,
+        328
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 16,
+      "filename": "16_flashcard_back.png",
+      "crop_box": [
+        1335,
+        397,
+        1514,
+        725
+      ],
+      "dimensions": [
+        179,
+        328
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 17,
+      "filename": "17_quiz_question.png",
+      "crop_box": [
+        20,
+        742,
+        191,
+        1024
+      ],
+      "dimensions": [
+        171,
+        282
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 18,
+      "filename": "18_quiz_result.png",
+      "crop_box": [
+        199,
+        742,
+        369,
+        1024
+      ],
+      "dimensions": [
+        170,
+        282
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 19,
+      "filename": "19_leaderboard.png",
+      "crop_box": [
+        377,
+        742,
+        546,
+        1024
+      ],
+      "dimensions": [
+        169,
+        282
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 20,
+      "filename": "20_nearby_learners.png",
+      "crop_box": [
+        555,
+        742,
+        724,
+        1024
+      ],
+      "dimensions": [
+        169,
+        282
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 21,
+      "filename": "21_learner_profile.png",
+      "crop_box": [
+        733,
+        742,
+        905,
+        1024
+      ],
+      "dimensions": [
+        172,
+        282
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 22,
+      "filename": "22_profile.png",
+      "crop_box": [
+        914,
+        742,
+        1088,
+        1024
+      ],
+      "dimensions": [
+        174,
+        282
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 23,
+      "filename": "23_notifications.png",
+      "crop_box": [
+        1097,
+        742,
+        1326,
+        1024
+      ],
+      "dimensions": [
+        229,
+        282
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    },
+    {
+      "index": 24,
+      "filename": "24_location_privacy.png",
+      "crop_box": [
+        1335,
+        742,
+        1514,
+        1024
+      ],
+      "dimensions": [
+        179,
+        282
+      ],
+      "format": "PNG",
+      "mode": "RGBA"
+    }
+  ]
+}

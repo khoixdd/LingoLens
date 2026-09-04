@@ -63,20 +63,15 @@ fun CommunityScreen(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            Text("Community", style = MaterialTheme.typography.headlineMedium)
-            Text(
-                "Learn together and celebrate progress.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            Text("Leaderboard", style = MaterialTheme.typography.headlineMedium)
         }
         item {
             SectionHeader(
-                title = "Global leaderboard",
+                title = "This Week",
                 action = {
                     Icon(
                         Icons.Outlined.EmojiEvents,
@@ -115,10 +110,6 @@ fun CommunityScreen(
                     }
                 }
             }
-        }
-        item { SectionHeader("Nearby learners") }
-        item {
-            NearbyLearnersMapCard()
         }
     }
 }

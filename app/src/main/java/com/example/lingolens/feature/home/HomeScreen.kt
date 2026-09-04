@@ -22,7 +22,8 @@ import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.Stars
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -37,10 +38,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.lingolens.ui.components.LingoLensCard
-import com.example.lingolens.ui.components.LingoLensPrimaryButton
 import com.example.lingolens.ui.components.SectionHeader
 import com.example.lingolens.ui.theme.LingoLensTheme
 import com.example.lingolens.domain.model.WeeklyActivityDay
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
 
 @Composable
 fun HomeScreen(
@@ -56,18 +59,13 @@ fun HomeScreen(
     }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(text = "Hello, ${state.name}!", style = MaterialTheme.typography.headlineSmall)
-                    Text(
-                        text = "Ready for a little progress?",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
                 }
                 Surface(
                     onClick = { onAction(HomeAction.OpenNotifications) },
@@ -97,34 +95,20 @@ fun HomeScreen(
                 HomeStat(
                     icon = Icons.Outlined.Stars,
                     value = "Lv. ${state.level}",
-                    label = state.title,
+                    label = "${state.title} · ${state.xp} XP",
                     modifier = Modifier.weight(1f),
+                    progress = state.xpProgressInLevel.toFloat() / state.xpPerLevel.coerceAtLeast(1),
                 )
             }
         }
         item {
-            LingoLensCard(contentPadding = PaddingValues(14.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("${state.xp} XP", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                    Text(
-                        "${state.xpPerLevel - state.xpProgressInLevel} to next level",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
-                LinearProgressIndicator(
-                    progress = { state.xpProgressInLevel.toFloat() / state.xpPerLevel.coerceAtLeast(1) },
-                    modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                )
-            }
-        }
-        item {
-            LingoLensCard(containerColor = MaterialTheme.colorScheme.primaryContainer) {
+            LingoLensCard(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentPadding = PaddingValues(16.dp),
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("Daily goal", style = MaterialTheme.typography.titleMedium)
+                        Text("Daily Goal", style = MaterialTheme.typography.titleMedium)
                         Text(
                             "${state.dailyWordsCompleted} / ${state.dailyWordsGoal} words",
                             style = MaterialTheme.typography.labelLarge,
@@ -132,11 +116,6 @@ fun HomeScreen(
                             modifier = Modifier.padding(top = 4.dp),
                         )
                     }
-                    Text(
-                        "${(state.dailyWordsGoal - state.dailyWordsCompleted).coerceAtLeast(0)} left",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
                 }
                 Spacer(Modifier.height(10.dp))
                 LinearProgressIndicator(
@@ -147,10 +126,19 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
                     trackColor = MaterialTheme.colorScheme.surface,
                 )
+                Text(
+                    if (state.dailyWordsCompleted >= state.dailyWordsGoal) "Goal complete!" else
+                        "Keep going! ${(state.dailyWordsGoal - state.dailyWordsCompleted).coerceAtLeast(0)} words left",
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
             }
         }
         item {
-            LingoLensCard(contentPadding = PaddingValues(14.dp)) {
+            LingoLensCard(
+                contentPadding = PaddingValues(14.dp),
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
                         Icon(
@@ -168,19 +156,15 @@ fun HomeScreen(
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
-                    FilledTonalButton(onClick = { onAction(HomeAction.OpenReview) }) { Text("Review") }
+                    TextButton(onClick = { onAction(HomeAction.OpenReview) }) {
+                        Text("Review now")
+                        Icon(Icons.AutoMirrored.Outlined.ArrowForward, null, Modifier.size(16.dp))
+                    }
                 }
             }
         }
         item { SectionHeader("This week") }
-        item {
-            LingoLensCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
-                WeeklyActivityChart(state.weeklyActivity)
-            }
-        }
-        item {
-            LingoLensPrimaryButton(text = "Continue learning", onClick = { onAction(HomeAction.OpenLearn) })
-        }
+        item { WeeklyActivityChart(state.weeklyActivity) }
     }
 }
 
@@ -190,6 +174,7 @@ private fun HomeStat(
     value: String,
     label: String,
     modifier: Modifier = Modifier,
+    progress: Float? = null,
 ) {
     LingoLensCard(modifier = modifier, contentPadding = PaddingValues(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -201,9 +186,15 @@ private fun HomeStat(
                     modifier = Modifier.padding(8.dp).size(18.dp),
                 )
             }
-            Column(Modifier.padding(start = 10.dp)) {
+            Column(Modifier.padding(start = 10.dp).weight(1f)) {
                 Text(value, style = MaterialTheme.typography.titleMedium)
                 Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                progress?.let {
+                    LinearProgressIndicator(
+                        progress = { it.coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth().padding(top = 5.dp).height(3.dp).clip(CircleShape),
+                    )
+                }
             }
         }
     }
@@ -226,13 +217,16 @@ private fun WeeklyActivityChart(activity: List<WeeklyActivityDay>) {
                     Box(
                         modifier = Modifier
                             .width(12.dp)
-                            .fillMaxHeight(item.uniqueWords.toFloat() / highest)
+                            .fillMaxHeight((item.uniqueWords.toFloat() / highest).coerceAtLeast(0.14f))
                             .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
-                            .background(MaterialTheme.colorScheme.primary),
+                            .background(
+                                if (item.uniqueWords == 0) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.primary,
+                            ),
                     )
                 }
                 Text(
-                    item.dayLabel,
+                    LocalDate.ofEpochDay(item.epochDay).dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp),

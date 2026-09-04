@@ -23,10 +23,18 @@ class RegisterViewModel @Inject constructor(
 
     fun onAction(action: RegisterAction) {
         when (action) {
-            is RegisterAction.UsernameChanged -> _uiState.update { it.copy(username = action.username, errorMessage = null) }
-            is RegisterAction.EmailChanged -> _uiState.update { it.copy(email = action.email, errorMessage = null) }
-            is RegisterAction.PasswordChanged -> _uiState.update { it.copy(password = action.password, errorMessage = null) }
-            is RegisterAction.ConfirmPasswordChanged -> _uiState.update { it.copy(confirmPassword = action.password, errorMessage = null) }
+            is RegisterAction.UsernameChanged -> _uiState.update {
+                it.copy(username = action.username, usernameError = null, errorMessage = null)
+            }
+            is RegisterAction.EmailChanged -> _uiState.update {
+                it.copy(email = action.email, emailError = null, errorMessage = null)
+            }
+            is RegisterAction.PasswordChanged -> _uiState.update {
+                it.copy(password = action.password, passwordError = null, confirmPasswordError = null, errorMessage = null)
+            }
+            is RegisterAction.ConfirmPasswordChanged -> _uiState.update {
+                it.copy(confirmPassword = action.password, confirmPasswordError = null, errorMessage = null)
+            }
             RegisterAction.TogglePasswordVisibility -> _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
             RegisterAction.ToggleConfirmPasswordVisibility -> _uiState.update { it.copy(isConfirmPasswordVisible = !it.isConfirmPasswordVisible) }
             is RegisterAction.TermsToggled -> _uiState.update { it.copy(termsAccepted = action.accepted) }
@@ -38,18 +46,37 @@ class RegisterViewModel @Inject constructor(
 
     private fun performRegister() {
         val state = _uiState.value
-        if (state.username.isBlank() || state.email.isBlank() || state.password.isBlank() || state.confirmPassword.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Please fill in all required fields.") }
-            return
-        }
+        if (state.isLoading) return
 
-        if (state.password != state.confirmPassword) {
-            _uiState.update { it.copy(errorMessage = "Passwords do not match.") }
-            return
+        val username = state.username.trim()
+        val email = state.email.trim()
+        val usernameError = if (username.isBlank()) "Username is required" else null
+        val emailError = when {
+            email.isBlank() -> "Email is required"
+            !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> "Enter a valid email address"
+            else -> null
         }
-
-        if (state.password.length < 6) {
-            _uiState.update { it.copy(errorMessage = "Password must be at least 6 characters.") }
+        val passwordError = when {
+            state.password.isBlank() -> "Password is required"
+            state.password.length < 6 -> "Password must be at least 6 characters"
+            else -> null
+        }
+        val confirmPasswordError = when {
+            state.confirmPassword.isBlank() -> "Password confirmation is required"
+            state.password != state.confirmPassword -> "Passwords do not match"
+            else -> null
+        }
+        if (usernameError != null || emailError != null || passwordError != null || confirmPasswordError != null) {
+            _uiState.update {
+                it.copy(
+                    usernameError = usernameError,
+                    emailError = emailError,
+                    passwordError = passwordError,
+                    confirmPasswordError = confirmPasswordError,
+                    errorMessage = null,
+                    isLoading = false,
+                )
+            }
             return
         }
 
@@ -58,18 +85,39 @@ class RegisterViewModel @Inject constructor(
             return
         }
 
-        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+        _uiState.update {
+            it.copy(
+                isLoading = true,
+                usernameError = null,
+                emailError = null,
+                passwordError = null,
+                confirmPasswordError = null,
+                errorMessage = null,
+            )
+        }
         viewModelScope.launch {
-            val result = authRepository.registerWithEmail(state.username, state.email, state.password)
+            val result = authRepository.registerWithEmail(username, email, state.password)
             result.fold(
                 onSuccess = { user ->
                     userRepository.syncUserProfileOnLogin(user)
                     _uiState.update { it.copy(isLoading = false, isRegistered = true) }
                 },
                 onFailure = { error ->
-                    _uiState.update { it.copy(isLoading = false, errorMessage = error.localizedMessage ?: "Registration failed. Try another email.") }
+                    _uiState.update { it.copy(isLoading = false, errorMessage = error.toRegistrationMessage()) }
                 },
             )
+        }
+    }
+
+    private fun Throwable.toRegistrationMessage(): String {
+        val details = message.orEmpty().lowercase()
+        return when {
+            "already in use" in details || "already exists" in details ->
+                "An account already exists for this email."
+            "network" in details -> "Network error. Check your connection and try again."
+            "weak password" in details -> "Password is too weak."
+            "email" in details && "format" in details -> "Enter a valid email address."
+            else -> "Registration failed. Please try again."
         }
     }
 }

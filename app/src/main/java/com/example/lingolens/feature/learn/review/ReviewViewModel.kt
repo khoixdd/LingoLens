@@ -83,7 +83,7 @@ class ReviewViewModel @Inject constructor(
 
     fun onAction(action: ReviewAction) {
         when (action) {
-            ReviewAction.Reveal -> _uiState.update { it.copy(isRevealed = true) }
+            ReviewAction.Reveal -> _uiState.update { it.copy(isRevealed = !it.isRevealed) }
             ReviewAction.PlayPronunciation -> {
                 val currentWord = _uiState.value.word
                 if (currentWord.isNotBlank()) {

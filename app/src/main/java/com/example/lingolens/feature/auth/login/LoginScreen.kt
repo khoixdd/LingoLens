@@ -10,10 +10,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
@@ -76,7 +79,9 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(insets)
-                .padding(horizontal = 24.dp),
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -99,9 +104,11 @@ fun LoginScreen(
                 onValueChange = { onAction(LoginAction.EmailChanged(it)) },
                 label = { Text("Email") },
                 singleLine = true,
+                isError = state.emailError != null,
+                supportingText = state.emailError?.let { message -> { Text(message) } },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
@@ -114,6 +121,8 @@ fun LoginScreen(
                 onValueChange = { onAction(LoginAction.PasswordChanged(it)) },
                 label = { Text("Password") },
                 singleLine = true,
+                isError = state.passwordError != null,
+                supportingText = state.passwordError?.let { message -> { Text(message) } },
                 visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
@@ -125,7 +134,7 @@ fun LoginScreen(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
@@ -161,8 +170,8 @@ fun LoginScreen(
                 enabled = !state.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(26.dp),
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(
@@ -192,12 +201,9 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                OutlinedButton(
+            OutlinedButton(
                     onClick = {
+                        onAction(LoginAction.GoogleSignInStarted)
                         try {
                             val defaultWebClientIdResId = appContext.resources.getIdentifier(
                                 "default_web_client_id",
@@ -224,26 +230,12 @@ fun LoginScreen(
                             onAction(LoginAction.GoogleSignInError(e.localizedMessage ?: "Failed to launch Google Sign-In."))
                         }
                     },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    enabled = !state.isLoading,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
                 ) {
                     Text("G  Google", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 }
-
-                OutlinedButton(
-                    onClick = {
-                        onAction(LoginAction.SubmitLogin)
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(16.dp),
-                ) {
-                    Text("f  Facebook", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                }
-            }
 
             Spacer(modifier = Modifier.height(32.dp))
 

@@ -36,6 +36,9 @@ import androidx.compose.ui.unit.dp
 import com.example.lingolens.domain.model.WeeklyActivityDay
 import com.example.lingolens.ui.components.LingoLensCard
 import com.example.lingolens.ui.components.SectionHeader
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,8 +60,8 @@ fun StatisticsScreen(state: StatisticsUiState, onAction: (StatisticsAction) -> U
         } else {
             LazyColumn(
                 Modifier.fillMaxSize().padding(insets),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item { SectionHeader("Today") }
                 item {
@@ -128,9 +131,11 @@ private fun ActivityChart(activity: List<WeeklyActivityDay>) {
                             .background(MaterialTheme.colorScheme.primary),
                     )
                 }
-                Text(day.dayLabel, style = MaterialTheme.typography.labelSmall)
+                Text(
+                    LocalDate.ofEpochDay(day.epochDay).dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
+                    style = MaterialTheme.typography.labelSmall,
+                )
             }
         }
     }
 }
-
