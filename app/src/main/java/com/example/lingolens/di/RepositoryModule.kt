@@ -31,6 +31,9 @@ abstract class RepositoryModule {
     abstract fun bindWordFetcher(
         impl: WordFetcherImpl
     ): WordFetcher
+    
+    @Binds
+    @Singleton
     abstract fun bindDailyActivityRepository(
         impl: DailyActivityRepositoryImpl,
     ): DailyActivityRepository

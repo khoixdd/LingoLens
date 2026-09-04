@@ -54,7 +54,7 @@ class VocabularyRepositoryImpl @Inject constructor(
         val userId = currentUserId() ?: return
         runCatching {
             val wordText = vocabulary.word.trim()
-            val existing = dao.getByWordText(wordText)
+            val existing = dao.getByWordText(userId, wordText)
 
             var finalVocabulary = vocabulary
 
@@ -76,7 +76,7 @@ class VocabularyRepositoryImpl @Inject constructor(
             }
             
             Log.d("API_TEST", "Word 2: ${finalVocabulary.word}, Meaning: ${finalVocabulary.meaning}")
-            val existing = dao.getByWordText(userId, vocabulary.word.trim())
+            
             if (existing != null) {
                 val updatedEntity = finalVocabulary.copy(
                     id = existing.id,
@@ -87,14 +87,10 @@ class VocabularyRepositoryImpl @Inject constructor(
                         finalVocabulary.masteryLevel 
                     },
                     isFavorite = existing.isFavorite || finalVocabulary.isFavorite,
-                ).toEntity()
-                dao.update(updatedEntity)
-            } else {
-                dao.insert(finalVocabulary.toEntity())
-                    masteryLevel = try { MasteryLevel.valueOf(existing.masteryLevel) } catch (_: Exception) { vocabulary.masteryLevel },
-                    isFavorite = existing.isFavorite || vocabulary.isFavorite,
                 ).toEntity(userId)
                 dao.update(updatedEntity)
+            } else {
+                dao.insert(finalVocabulary.toEntity(userId))
             } 
         }
     }
