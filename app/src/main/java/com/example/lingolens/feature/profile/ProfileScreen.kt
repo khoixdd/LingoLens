@@ -77,6 +77,7 @@ fun ProfileScreen(
         item {
             ProfileGroup {
                 ProfileSettingsRow("Notification Settings", Icons.Outlined.Notifications, { onAction(ProfileAction.OpenNotifications) })
+                ProfileSettingsRow("Translator", Icons.Outlined.Translate, { onAction(ProfileAction.OpenTranslator) })
                 ProfileSettingsRow("Location & Privacy", Icons.Outlined.LocationOn, { onAction(ProfileAction.OpenPrivacy) })
                 ProfileSettingsRow("Logout", Icons.AutoMirrored.Outlined.Logout, { onAction(ProfileAction.Logout) }, showDivider = false)
             }

@@ -14,6 +14,7 @@ fun ProfileRoute(
     onOpenAchievements: () -> Unit,
     onOpenStatistics: () -> Unit,
     onOpenPrivacy: () -> Unit,
+    onOpenTranslator: () -> Unit,
     onLogout: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel(),
 ) {
@@ -35,6 +36,7 @@ fun ProfileRoute(
                 ProfileAction.OpenPrivacy -> onOpenPrivacy()
                 ProfileAction.OpenAchievements -> onOpenAchievements()
                 ProfileAction.OpenStatistics -> onOpenStatistics()
+                ProfileAction.OpenTranslator -> onOpenTranslator()
                 ProfileAction.Logout -> viewModel.onAction(ProfileAction.Logout)
             }
         },
