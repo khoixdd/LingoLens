@@ -199,9 +199,9 @@ Developed by students from the **Advanced Program in Computer Science** at the *
 
 | Member | Student ID |
 |---|---:|
+| Dang Tran Tuan Khoi | 24125034 |
 | Nguyen Chanh Chuong | 24125005 |
 | Huynh Nguyen Khanh Duy | 24125007 |
-| Dang Tran Tuan Khoi | 24125034 |
 | Vo Nguyen Minh Triet | 24125082 |
 
 ## Project Status
