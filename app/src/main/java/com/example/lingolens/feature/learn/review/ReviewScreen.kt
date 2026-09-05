@@ -1,7 +1,15 @@
 package com.example.lingolens.feature.learn.review
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,6 +40,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -138,10 +149,15 @@ fun ReviewScreen(
                 }
             }
             else -> {
-                val rotation by animateFloatAsState(
-                    targetValue = if (state.isRevealed) 180f else 0f,
-                    animationSpec = tween(durationMillis = 500),
+                val wordChangeTransition = updateTransition(
+                    targetState = state,
+                    label = "WordChangeTransition"
+                )
+                val flipDuration = 500
+                val rotation by wordChangeTransition.animateFloat(
+                    transitionSpec = { tween(flipDuration) },
                     label = "CardFlipAnimation",
+                    { if (it.isRevealed) 180f else 0f }
                 )
 
                 Column(
@@ -216,44 +232,61 @@ fun ReviewScreen(
                                 )
                             }
                         } else {
-                            Column(
-                                Modifier
-                                    .fillMaxSize()
-                                    .graphicsLayer { rotationY = 180f },
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
-                            ) {
-                                Text(
-                                    state.word,
-                                    style = MaterialTheme.typography.headlineLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    textAlign = TextAlign.Center,
-                                )
-                                if (state.pronunciation.isNotBlank()) {
+                            // Wrap to delay content change on new word while the flip animation
+                            // is running. This would cause a delay if the user presses during
+                            // the reverse flip, but it's an acceptable inconvenience at most.
+                            wordChangeTransition.AnimatedContent(
+                                transitionSpec = {
+                                    when {
+                                        // Flipping backwards
+                                        (initialState.isRevealed && !targetState.isRevealed) ->
+                                            fadeIn(snap(flipDuration)) togetherWith
+                                                fadeOut(snap(flipDuration))
+                                        else ->
+                                            EnterTransition.None togetherWith ExitTransition.None
+
+                                    }
+                                }
+                            ) { state ->
+                                Column(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer { rotationY = 180f },
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center,
+                                ) {
                                     Text(
-                                        state.pronunciation,
+                                        state.word,
+                                        style = MaterialTheme.typography.headlineLarge,
+                                        fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary,
-                                    )
-                                }
-                                IconButton(onClick = { onAction(ReviewAction.PlayPronunciation) }) {
-                                    Icon(Icons.AutoMirrored.Outlined.VolumeUp, "Pronounce")
-                                }
-                                Spacer(Modifier.height(20.dp))
-                                Text(
-                                    state.meaning,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    textAlign = TextAlign.Center,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                                if (state.example.isNotBlank()) {
-                                    Spacer(Modifier.height(12.dp))
-                                    Text(
-                                        state.example,
-                                        fontStyle = FontStyle.Italic,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         textAlign = TextAlign.Center,
                                     )
+                                    if (state.pronunciation.isNotBlank()) {
+                                        Text(
+                                            state.pronunciation,
+                                            color = MaterialTheme.colorScheme.primary,
+                                        )
+                                    }
+                                    IconButton(onClick = { onAction(ReviewAction.PlayPronunciation) }) {
+                                        Icon(Icons.AutoMirrored.Outlined.VolumeUp, "Pronounce")
+                                    }
+                                    Spacer(Modifier.height(20.dp))
+                                    Text(
+                                        state.meaning,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        textAlign = TextAlign.Center,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    if (state.example.isNotBlank()) {
+                                        Spacer(Modifier.height(12.dp))
+                                        Text(
+                                            state.example,
+                                            fontStyle = FontStyle.Italic,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            textAlign = TextAlign.Center,
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -298,17 +331,46 @@ fun ReviewScreen(
 @Preview(showBackground = true)
 @Composable
 private fun ReviewPreview() {
+    val words = listOf(
+        Triple("ubiquitous", "/juːˈbɪkwɪtəs/", "phổ biến"),
+        Triple("stupid", "/ˈstjuːpɪd/", "ngu dốt"),
+    )
+
+    val currentIndex = remember { mutableIntStateOf(0) }
+
+    val state = remember { mutableStateOf(
+        ReviewUiState(
+                isLoading = false,
+                word = words[currentIndex.intValue].first,
+                pronunciation = words[currentIndex.intValue].second,
+                meaning = words[currentIndex.intValue].third,
+                isRevealed = false,
+                total = 5,
+            )
+        )
+    }
+
     LingoLensTheme(darkTheme = false) {
         ReviewScreen(
-            ReviewUiState(
-                isLoading = false,
-                word = "ubiquitous",
-                pronunciation = "/juːˈbɪkwɪtəs/",
-                meaning = "phổ biến",
-                isRevealed = true,
-                total = 5,
-            ),
-            {},
+            state = state.value,
+            onAction = {
+                when (it) {
+                    is ReviewAction.Reveal -> {
+                        state.value = state.value.copy(isRevealed = !state.value.isRevealed)
+                    }
+                    is ReviewAction.Rate -> {
+                        currentIndex.intValue = (currentIndex.intValue + 1) % 2
+                        state.value = state.value.copy(
+                            word = words[currentIndex.intValue].first,
+                            pronunciation = words[currentIndex.intValue].second,
+                            meaning = words[currentIndex.intValue].third,
+                            currentIndex = currentIndex.intValue,
+                            isRevealed = false,
+                        )
+                    }
+                    else -> {}
+                }
+            },
         )
     }
 }
