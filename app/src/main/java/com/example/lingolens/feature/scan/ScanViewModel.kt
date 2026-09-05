@@ -34,8 +34,10 @@ class ScanViewModel @Inject constructor(
         when (action) {
             is ScanAction.ToggleFlash -> _uiState.update { it.copy(isFlashEnabled = !it.isFlashEnabled) }
             is ScanAction.Capture -> _uiState.update {
-                it.copy(isScanning = true)
-                it.copy(feedbackMessage = "Capturing image and extracting text...")
+                it.copy(
+                    isScanning = true,
+                    feedbackMessage = "Capturing image and extracting text...",
+                )
             }
             is ScanAction.OpenGallery -> _uiState.update {
                 if (!uiState.value.isScanning) {

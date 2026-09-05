@@ -5,6 +5,7 @@ data class UserProfile(
     val username: String = "Learner",
     val email: String = "",
     val avatarUrl: String = "",
+    val avatarId: String = ProfilePersonalization.DEFAULT_AVATAR,
     val xp: Int = 0,
     val level: Int = 1,
     val streakDays: Int = 0,

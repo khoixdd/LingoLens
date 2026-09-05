@@ -55,6 +55,7 @@ class CommunityViewModel @Inject constructor(
                         username = currentName.ifBlank { "Learner" },
                         email = userProfile?.email.orEmpty().ifBlank { authUser?.email.orEmpty() },
                         avatarUrl = userProfile?.avatarUrl.orEmpty(),
+                        avatarId = userProfile.avatarId,
                         xp = userProfile?.xp ?: 100,
                         level = userProfile?.level ?: 1,
                         streakDays = userProfile?.streakDays ?: 1,
@@ -67,6 +68,7 @@ class CommunityViewModel @Inject constructor(
                             val isCurrent = profile.uid == currentUid
                             LeaderboardEntry(
                                 rank = index + 1,
+                                avatarId = profile.avatarId,
                                 name = if (isCurrent && currentName.isNotBlank()) currentName else profile.username,
                                 level = profile.level,
                                 xp = profile.xp,

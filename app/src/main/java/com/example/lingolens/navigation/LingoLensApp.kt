@@ -1,5 +1,8 @@
 package com.example.lingolens.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import com.example.lingolens.feature.celebration.CelebrationRoute
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -40,6 +43,7 @@ import com.example.lingolens.feature.learn.notebook.NotebookRoute
 import com.example.lingolens.feature.learn.quiz.QuizResultScreen
 import com.example.lingolens.feature.learn.quiz.QuizRoute
 import com.example.lingolens.feature.learn.review.ReviewRoute
+import com.example.lingolens.feature.profile.edit.EditProfileRoute
 import com.example.lingolens.feature.profile.ProfileRoute
 import com.example.lingolens.feature.profile.notification.NotificationSettingsRoute
 import com.example.lingolens.feature.profile.privacy.PrivacySettingsRoute
@@ -59,6 +63,7 @@ fun LingoLensApp() {
     val showBottomBar = current == Home || current == Scan || current == Learn ||
         current == Community || current == Profile
 
+    Box(Modifier.fillMaxSize()) {
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
@@ -148,6 +153,10 @@ fun LingoLensApp() {
                 }
                 entry<Home> {
                     HomeRoute(
+                        onOpenNotebook = { backStack.add(Notebook) },
+                        onOpenQuiz = { backStack.add(Quiz(System.currentTimeMillis())) },
+                        onOpenStatistics = { backStack.add(Statistics) },
+                        onOpenAchievements = { backStack.add(Achievements) },
                         onOpenLearn = { backStack.openRoot(Learn) },
                         onOpenReview = { backStack.add(Review) },
                         onOpenNotifications = { backStack.add(NotificationSettings) },
@@ -182,13 +191,22 @@ fun LingoLensApp() {
                 entry<Quiz> {
                     QuizRoute(
                         onBack = { backStack.removeLastOrNull() },
-                        onFinished = { result -> backStack.add(QuizResult(result.score, result.total)) },
+                        onFinished = { result ->
+                            backStack.add(
+                                QuizResult(
+                                    score = result.score,
+                                    total = result.total,
+                                    attemptId = System.currentTimeMillis(),
+                                )
+                            )
+                        },
                     )
                 }
                 entry<QuizResult> { key ->
                     QuizResultScreen(
                         score = key.score,
                         total = key.total,
+                        resultId = key.attemptId,
                         onReviewAnswers = { 
                             backStack.removeLastOrNull() 
                             backStack.removeLastOrNull()
@@ -199,6 +217,7 @@ fun LingoLensApp() {
                 }
                 entry<Profile> {
                     ProfileRoute(
+                        onEditProfile = { backStack.add(EditProfile) },
                         onOpenMyWords = { backStack.add(Notebook) },
                         onOpenNotifications = { backStack.add(NotificationSettings) },
                         onOpenAchievements = { backStack.add(Achievements) },
@@ -209,6 +228,9 @@ fun LingoLensApp() {
                             backStack.openRoot(Login)
                         },
                     )
+                }
+                entry<EditProfile> {
+                    EditProfileRoute(onBack = { backStack.removeLastOrNull() })
                 }
                 entry<NotificationSettings> {
                     NotificationSettingsRoute(onBack = { backStack.removeLastOrNull() })
@@ -248,6 +270,8 @@ fun LingoLensApp() {
                 }
             },
         )
+    }
+    CelebrationRoute()
     }
 }
 

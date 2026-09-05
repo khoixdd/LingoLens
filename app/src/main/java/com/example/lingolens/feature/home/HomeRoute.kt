@@ -7,6 +7,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun HomeRoute(
+    onOpenNotebook: () -> Unit,
+    onOpenQuiz: () -> Unit,
+    onOpenStatistics: () -> Unit,
+    onOpenAchievements: () -> Unit,
     onOpenLearn: () -> Unit,
     onOpenReview: () -> Unit,
     onOpenNotifications: () -> Unit,
@@ -17,6 +21,10 @@ fun HomeRoute(
         state = state,
         onAction = { action ->
             when (action) {
+                HomeAction.OpenNotebook -> onOpenNotebook()
+                HomeAction.OpenQuiz -> onOpenQuiz()
+                HomeAction.OpenStatistics -> onOpenStatistics()
+                HomeAction.OpenAchievements -> onOpenAchievements()
                 HomeAction.OpenLearn -> onOpenLearn()
                 HomeAction.OpenReview -> onOpenReview()
                 HomeAction.OpenNotifications -> onOpenNotifications()

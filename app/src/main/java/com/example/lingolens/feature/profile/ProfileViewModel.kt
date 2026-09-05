@@ -61,6 +61,7 @@ class ProfileViewModel @Inject constructor(
         ProfileUiState(
             isLoading = false,
             name = displayName,
+            avatarId = userProfile?.avatarId ?: "leaf",
             email = email,
             level = LevelCalculator.levelForXp(userProfile?.xp ?: 0),
             title = LevelCalculator.titleForLevel(LevelCalculator.levelForXp(userProfile?.xp ?: 0)),

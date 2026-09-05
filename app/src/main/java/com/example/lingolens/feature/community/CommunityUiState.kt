@@ -2,6 +2,7 @@ package com.example.lingolens.feature.community
 
 data class LeaderboardEntry(
     val rank: Int,
+    val avatarId: String = "leaf",
     val name: String,
     val level: Int,
     val xp: Int,

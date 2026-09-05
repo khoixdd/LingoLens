@@ -1,5 +1,6 @@
 package com.example.lingolens.feature.profile.achievements
 
+import com.example.lingolens.ui.components.achievementVisual
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -71,6 +72,7 @@ fun AchievementsScreen(state: AchievementsUiState, onAction: (AchievementsAction
                 }
                 items(state.achievements.size) { index ->
                     val item = state.achievements[index]
+                    val visual = achievementVisual(item.definition.id)
                     LingoLensCard(
                         containerColor = if (item.isUnlocked) MaterialTheme.colorScheme.primaryContainer
                         else MaterialTheme.colorScheme.surfaceVariant,
@@ -79,24 +81,32 @@ fun AchievementsScreen(state: AchievementsUiState, onAction: (AchievementsAction
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
                                 shape = CircleShape,
-                                color = if (item.isUnlocked) MaterialTheme.colorScheme.primary
+                                color = if (item.isUnlocked) visual.accent.copy(alpha = 0.12f)
                                 else MaterialTheme.colorScheme.surfaceVariant,
                             ) {
                                 Icon(
-                                    if (item.isUnlocked) Icons.Outlined.EmojiEvents else Icons.Outlined.Lock,
+                                    visual.icon,
                                     contentDescription = null,
                                     modifier = Modifier.padding(10.dp).size(22.dp),
-                                    tint = if (item.isUnlocked) MaterialTheme.colorScheme.onPrimary
-                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = if (item.isUnlocked) visual.accent
+                                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
                                 )
                             }
                             Column(Modifier.fillMaxWidth().padding(start = 14.dp)) {
-                                Text(item.definition.name, style = MaterialTheme.typography.titleMedium)
+                                Text(item.definition.name, style = MaterialTheme.typography.titleMedium,
+                                    color = if (item.isUnlocked) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text(
                                     item.definition.description,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
+                                    if (!item.isUnlocked) Icon(Icons.Outlined.Lock, null, Modifier.size(12.dp))
+                                    Text(if (item.isUnlocked) "Unlocked" else "Locked",
+                                        modifier = Modifier.padding(start = if (item.isUnlocked) 0.dp else 4.dp),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (item.isUnlocked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
                             }
                         }
                     }

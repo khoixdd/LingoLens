@@ -3,6 +3,7 @@ package com.example.lingolens.feature.profile
 data class ProfileUiState(
     val isLoading: Boolean = true,
     val name: String = "Learner",
+    val avatarId: String = "leaf",
     val email: String = "",
     val level: Int = 1,
     val title: String = "Explorer",

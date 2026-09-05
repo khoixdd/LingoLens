@@ -1,49 +1,26 @@
 package com.example.lingolens.feature.home
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AutoStories
-import androidx.compose.material.icons.outlined.LocalFireDepartment
-import androidx.compose.material.icons.outlined.NotificationsNone
-import androidx.compose.material.icons.outlined.Stars
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.lingolens.ui.components.WeeklyActivityChart
 import com.example.lingolens.ui.components.LingoLensCard
-import com.example.lingolens.ui.components.SectionHeader
-import com.example.lingolens.ui.theme.LingoLensTheme
-import com.example.lingolens.domain.model.WeeklyActivityDay
-import java.time.LocalDate
-import java.time.format.TextStyle
-import java.util.Locale
+import kotlin.math.roundToInt
 
 @Composable
 fun HomeScreen(
@@ -52,194 +29,182 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     if (state.isLoading) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
+        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         return
     }
+    val goalProgress = (state.dailyWordsCompleted.toFloat() / state.dailyWordsGoal.coerceAtLeast(1)).coerceIn(0f, 1f)
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item {
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(text = "Hello, ${state.name}!", style = MaterialTheme.typography.headlineSmall)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                Column(Modifier.weight(1f).padding(end = 8.dp)) {
+                    Text("Hello, ${state.name}!", style = MaterialTheme.typography.headlineSmall)
+                    Text("Ready for a little progress today?",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 3.dp))
                 }
-                Surface(
-                    onClick = { onAction(HomeAction.OpenNotifications) },
-                    modifier = Modifier.size(40.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Outlined.NotificationsNone,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
+                FilledTonalIconButton(onClick = { onAction(HomeAction.OpenNotifications) },
+                    modifier = Modifier.size(48.dp)) {
+                    Icon(Icons.Outlined.NotificationsNone, "Notifications", Modifier.size(21.dp))
                 }
             }
         }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                HomeStat(
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                CompactStat(
                     icon = Icons.Outlined.LocalFireDepartment,
                     value = state.streakDays.toString(),
                     label = "day streak",
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    accent = Color(0xFFBB632D),
                 )
-                HomeStat(
+                CompactStat(
                     icon = Icons.Outlined.Stars,
                     value = "Lv. ${state.level}",
-                    label = "${state.title} · ${state.xp} XP",
-                    modifier = Modifier.weight(1f),
+                    label = state.title,
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    xpLabel = "${state.xp} XP",
                     progress = state.xpProgressInLevel.toFloat() / state.xpPerLevel.coerceAtLeast(1),
                 )
             }
         }
         item {
-            LingoLensCard(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentPadding = PaddingValues(16.dp),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Daily Goal", style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            "${state.dailyWordsCompleted} / ${state.dailyWordsGoal} words",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
+            LingoLensCard(containerColor = MaterialTheme.colorScheme.primaryContainer, contentPadding = PaddingValues(16.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Daily Goal", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                    Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surface.copy(alpha = 0.75f)) {
+                        Text("${(goalProgress * 100).roundToInt()}%",
+                            Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
                     }
                 }
-                Spacer(Modifier.height(10.dp))
+                Text("${state.dailyWordsCompleted} / ${state.dailyWordsGoal} words",
+                    style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(top = 6.dp, bottom = 10.dp))
                 LinearProgressIndicator(
-                    progress = {
-                        (state.dailyWordsCompleted.toFloat() / state.dailyWordsGoal.coerceAtLeast(1))
-                            .coerceIn(0f, 1f)
-                    },
-                    modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
-                    trackColor = MaterialTheme.colorScheme.surface,
+                    progress = { goalProgress },
+                    modifier = Modifier.fillMaxWidth().height(9.dp).clip(CircleShape),
+                    trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                    drawStopIndicator = {},
                 )
                 Text(
-                    if (state.dailyWordsCompleted >= state.dailyWordsGoal) "Goal complete!" else
+                    if (state.dailyWordsCompleted >= state.dailyWordsGoal) "Goal complete! Nice work today." else
                         "Keep going! ${(state.dailyWordsGoal - state.dailyWordsCompleted).coerceAtLeast(0)} words left",
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
+                    style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
             }
         }
         item {
-            LingoLensCard(
-                contentPadding = PaddingValues(14.dp),
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
-                        Icon(
-                            Icons.Outlined.AutoStories,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(10.dp).size(20.dp),
-                        )
+            LingoLensCard(contentPadding = PaddingValues(12.dp),
+                containerColor = lerp(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.primaryContainer, 0.45f),
+                elevation = 0.dp) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.AutoStories, null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.primary)
+                    Column(Modifier.weight(1f).padding(start = 10.dp)) {
+                        Text("Today's Review", style = MaterialTheme.typography.titleSmall)
+                        Text("${state.reviewWordsDue} ${if (state.reviewWordsDue == 1) "word" else "words"} due",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (state.reviewWordsDue == 0) {
+                            Text("You're all caught up!", style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary)
+                        }
                     }
-                    Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                        Text("Today's review", style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            "${state.reviewWordsDue} words due",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                    TextButton(onClick = { onAction(HomeAction.OpenReview) }) {
-                        Text("Review now")
-                        Icon(Icons.AutoMirrored.Outlined.ArrowForward, null, Modifier.size(16.dp))
+                    TextButton(onClick = { onAction(HomeAction.OpenReview) },
+                        contentPadding = PaddingValues(horizontal = 8.dp)) {
+                        Text("Review now", style = MaterialTheme.typography.labelMedium)
+                        Icon(Icons.AutoMirrored.Outlined.ArrowForward, null, Modifier.padding(start = 4.dp).size(14.dp))
                     }
                 }
             }
         }
-        item { SectionHeader("This week") }
-        item { WeeklyActivityChart(state.weeklyActivity) }
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Quick Actions", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 2.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    QuickAction("Notebook", Icons.AutoMirrored.Outlined.MenuBook, Modifier.weight(1f)) {
+                        onAction(HomeAction.OpenNotebook)
+                    }
+                    QuickAction("Quiz", Icons.Outlined.Quiz, Modifier.weight(1f), Color(0xFF8261A7)) {
+                        onAction(HomeAction.OpenQuiz)
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    QuickAction("Statistics", Icons.Outlined.BarChart, Modifier.weight(1f), Color(0xFF398482)) {
+                        onAction(HomeAction.OpenStatistics)
+                    }
+                    QuickAction("Achievements", Icons.Outlined.EmojiEvents, Modifier.weight(1f), Color(0xFFA77A13)) {
+                        onAction(HomeAction.OpenAchievements)
+                    }
+                }
+            }
+        }
+        item {
+            LingoLensCard(contentPadding = PaddingValues(14.dp)) {
+                Text("This Week", style = MaterialTheme.typography.titleSmall)
+                Text("${state.weeklyActivity.sumOf { it.uniqueWords }} words studied this week",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp, bottom = 10.dp))
+                WeeklyActivityChart(state.weeklyActivity)
+            }
+        }
+        item {
+            Surface(onClick = { onAction(HomeAction.OpenLearn) }, modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)) {
+                Row(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.School, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+                    Text("Continue Learning", Modifier.weight(1f).padding(horizontal = 10.dp),
+                        style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.AutoMirrored.Outlined.ArrowForward, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun HomeStat(
+private fun CompactStat(
     icon: ImageVector,
     value: String,
     label: String,
     modifier: Modifier = Modifier,
+    accent: Color = MaterialTheme.colorScheme.primary,
+    xpLabel: String? = null,
     progress: Float? = null,
 ) {
-    LingoLensCard(modifier = modifier, contentPadding = PaddingValues(14.dp)) {
+    LingoLensCard(modifier, PaddingValues(10.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        elevation = 0.dp) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
-                Icon(
-                    icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(8.dp).size(18.dp),
-                )
-            }
-            Column(Modifier.padding(start = 10.dp).weight(1f)) {
-                Text(value, style = MaterialTheme.typography.titleMedium)
-                Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                progress?.let {
-                    LinearProgressIndicator(
-                        progress = { it.coerceIn(0f, 1f) },
-                        modifier = Modifier.fillMaxWidth().padding(top = 5.dp).height(3.dp).clip(CircleShape),
-                    )
-                }
-            }
+            Icon(icon, null, Modifier.size(21.dp), tint = accent)
+            Text(value, Modifier.weight(1f).padding(start = 7.dp),
+                style = if (xpLabel == null) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        }
+        Text(if (xpLabel == null) label else "$label · $xpLabel", style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+        progress?.let {
+            LinearProgressIndicator(progress = { it.coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth().padding(top = 5.dp).height(4.dp).clip(CircleShape),
+                drawStopIndicator = {})
         }
     }
 }
 
 @Composable
-private fun WeeklyActivityChart(activity: List<WeeklyActivityDay>) {
-    val highest = activity.maxOfOrNull { it.uniqueWords }?.coerceAtLeast(1) ?: 1
-    Row(
-        modifier = Modifier.fillMaxWidth().height(90.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Bottom,
-    ) {
-        activity.forEach { item ->
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(
-                    modifier = Modifier.height(62.dp),
-                    contentAlignment = Alignment.BottomCenter,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .width(12.dp)
-                            .fillMaxHeight((item.uniqueWords.toFloat() / highest).coerceAtLeast(0.14f))
-                            .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
-                            .background(
-                                if (item.uniqueWords == 0) MaterialTheme.colorScheme.primaryContainer
-                                else MaterialTheme.colorScheme.primary,
-                            ),
-                    )
-                }
-                Text(
-                    LocalDate.ofEpochDay(item.epochDay).dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 6.dp),
-                )
-            }
+private fun QuickAction(
+    label: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    accent: Color = MaterialTheme.colorScheme.primary,
+    onClick: () -> Unit,
+) {
+    Surface(onClick = onClick, modifier = modifier, shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.22f)) {
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, null, Modifier.size(20.dp), tint = accent)
+            Text(label, Modifier.weight(1f).padding(start = 8.dp), style = MaterialTheme.typography.labelMedium)
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun HomeScreenPreview() {
-    LingoLensTheme(darkTheme = false) {
-        HomeScreen(state = HomeUiState(), onAction = {})
     }
 }

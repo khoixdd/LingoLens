@@ -12,5 +12,4 @@ interface VocabularyRepository {
     suspend fun updateVocabulary(vocabulary: Vocabulary)
     suspend fun toggleFavorite(id: String)
     suspend fun deleteVocabulary(id: String)
-    suspend fun seedSampleDataIfEmpty()
 }

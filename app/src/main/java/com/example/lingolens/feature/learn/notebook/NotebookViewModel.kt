@@ -28,7 +28,6 @@ class NotebookViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            repository.seedSampleDataIfEmpty()
         }
     }
 

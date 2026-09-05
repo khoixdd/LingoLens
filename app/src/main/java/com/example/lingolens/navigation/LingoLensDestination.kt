@@ -14,8 +14,9 @@ sealed interface LingoLensDestination : NavKey
 @Serializable data class VocabularyDetail(val wordId: String) : LingoLensDestination
 @Serializable data object Review : LingoLensDestination
 @Serializable data class Quiz(val wordId: Long = System.currentTimeMillis()) : LingoLensDestination
-@Serializable data class QuizResult(val score: Int, val total: Int) : LingoLensDestination
+@Serializable data class QuizResult(val score: Int, val total: Int, val attemptId: Long) : LingoLensDestination
 @Serializable data object Profile : LingoLensDestination
+@Serializable data object EditProfile : LingoLensDestination
 @Serializable data object NotificationSettings : LingoLensDestination
 @Serializable data object Statistics : LingoLensDestination
 @Serializable data object Achievements : LingoLensDestination

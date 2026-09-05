@@ -24,10 +24,10 @@ class WordFetcherImpl @Inject constructor (
     private val api: DictionaryApiService
 ) : WordFetcher {
 
-    override suspend fun getVocabulary(targetWord: String): Vocabulary? {
+    override suspend fun getVocabulary(word: String): Vocabulary? {
         return withContext(Dispatchers.IO) {
             try {
-                val response = api.getWordData(targetWord)
+                val response = api.getWordData(word)
                 
                 Log.d("API_TEST", "Response Code: ${response.code()}")
                 Log.d("API_TEST", "Response Body: ${response.body()}")
