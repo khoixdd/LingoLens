@@ -46,6 +46,7 @@ import com.example.lingolens.feature.profile.privacy.PrivacySettingsRoute
 import com.example.lingolens.feature.profile.achievements.AchievementsRoute
 import com.example.lingolens.feature.progress.StatisticsRoute
 import com.example.lingolens.feature.scan.ScanRoute
+import com.example.lingolens.feature.translator.TranslatorRoute
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -204,11 +205,15 @@ fun LingoLensApp() {
                         onOpenAchievements = { backStack.add(Achievements) },
                         onOpenStatistics = { backStack.add(Statistics) },
                         onOpenPrivacy = { backStack.add(PrivacySettings) },
+                        onOpenTranslator = { backStack.add(Translator) },
                         onLogout = {
                             runCatching { FirebaseAuth.getInstance().signOut() }
                             backStack.openRoot(Login)
                         },
                     )
+                }
+                entry<Translator> {
+                    TranslatorRoute(onBack = { backStack.removeLastOrNull() })
                 }
                 entry<NotificationSettings> {
                     NotificationSettingsRoute(onBack = { backStack.removeLastOrNull() })

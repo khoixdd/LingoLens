@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Stars
+import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -92,6 +93,7 @@ fun ProfileScreen(
         item {
             LingoLensCard(contentPadding = PaddingValues(vertical = 4.dp)) {
                 ProfileMenuItem("Notification Settings", Icons.Outlined.Notifications, { onAction(ProfileAction.OpenNotifications) })
+                ProfileMenuItem("Translator", Icons.Outlined.Translate, { onAction(ProfileAction.OpenTranslator) })
                 ProfileMenuItem("Location & Privacy", Icons.Outlined.LocationOn, { onAction(ProfileAction.OpenPrivacy) })
                 ProfileMenuItem("Logout", Icons.AutoMirrored.Outlined.Logout, { onAction(ProfileAction.Logout) }, showDivider = false)
             }
