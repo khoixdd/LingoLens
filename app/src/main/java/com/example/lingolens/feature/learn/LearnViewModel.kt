@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 @HiltViewModel
 class LearnViewModel @Inject constructor(
@@ -21,12 +20,6 @@ class LearnViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val todayEpochDay = java.time.LocalDate.now().toEpochDay()
-
-    init {
-        viewModelScope.launch {
-            repository.seedSampleDataIfEmpty()
-        }
-    }
 
     val uiState: StateFlow<LearnUiState> = combine(
         repository.getAllVocabulary(),

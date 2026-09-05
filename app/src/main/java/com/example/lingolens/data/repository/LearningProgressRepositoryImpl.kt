@@ -9,6 +9,9 @@ import com.example.lingolens.domain.repository.NotificationSettingsRepository
 import com.example.lingolens.domain.repository.UserRepository
 import com.example.lingolens.domain.repository.VocabularyRepository
 import com.example.lingolens.notification.NotificationHelper
+import com.example.lingolens.domain.model.AchievementUnlock
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -23,6 +26,9 @@ class LearningProgressRepositoryImpl @Inject constructor(
     private val notificationSettingsRepository: NotificationSettingsRepository,
     private val notificationHelper: NotificationHelper,
 ) : LearningProgressRepository {
+    private val unlockEvents = MutableSharedFlow<AchievementUnlock>(extraBufferCapacity = 16)
+    override val achievementUnlocks = unlockEvents.asSharedFlow()
+
     override suspend fun recordActivity(vocabularyId: String, xpReward: Int) {
         val uid = authRepository.getCurrentUser()?.uid ?: return
         val today = LocalDate.now().toEpochDay()
@@ -52,6 +58,7 @@ class LearningProgressRepositoryImpl @Inject constructor(
             totalWords = totalWords,
         ) ?: return
         if (result.newlyUnlockedAchievementIds.isEmpty()) return
+        result.newlyUnlockedAchievementIds.forEach { id -> unlockEvents.tryEmit(AchievementUnlock(uid, id)) }
         val settings = notificationSettingsRepository.getSettings()
         if (!settings.achievementNotificationsEnabled) return
         val definitionsById = AchievementDefinitions.all.associateBy { it.id }

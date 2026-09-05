@@ -1,5 +1,6 @@
 package com.example.lingolens.data.repository
 
+import com.example.lingolens.domain.model.ProfilePersonalization
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
@@ -154,6 +155,17 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updatePersonalization(uid: String, displayName: String, avatarId: String) {
+        require(ProfilePersonalization.validateName(displayName) == null) { "Enter a valid display name." }
+        require(avatarId in ProfilePersonalization.avatarIds) { "Choose a valid avatar." }
+        check(uid.isNotBlank() && auth?.currentUser?.uid == uid) { "Sign in again to edit your profile." }
+        val db = checkNotNull(firestore) { "Firebase is unavailable. Please retry." }
+        // One update changes only these two fields; progress and account details are untouched.
+        db.collection("users").document(uid).update(
+            mapOf("username" to displayName.trim(), "avatarId" to avatarId),
+        ).await()
+    }
+
     override fun syncUserProfileOnLogin(user: AuthUser) {
         val db = firestore ?: return
         if (user.uid.isBlank()) return
@@ -183,7 +195,9 @@ class UserRepositoryImpl @Inject constructor(
                 } else {
                     buildMap {
                         put("lastLoginAt", now)
-                        if (user.displayName.isNotBlank()) put("username", user.displayName)
+                        if (snapshot.getString("username").isNullOrBlank() && user.displayName.isNotBlank()) {
+                            put("username", user.displayName)
+                        }
                         if (user.email.isNotBlank()) put("email", user.email)
                         if (user.photoUrl.isNotBlank()) put("avatarUrl", user.photoUrl)
                     }
@@ -339,6 +353,7 @@ class UserRepositoryImpl @Inject constructor(
             username = finalUsername,
             email = (data["email"] as? String).orEmpty().ifBlank { if (docUid == currentUser?.uid) currentUser?.email.orEmpty() else "" },
             avatarUrl = (data["avatarUrl"] as? String).orEmpty(),
+            avatarId = ProfilePersonalization.avatarOrDefault(data["avatarId"] as? String),
             xp = xp,
             level = LevelCalculator.levelForXp(xp),
             streakDays = (data["streakDays"] as? Number)?.toInt() ?: 0,

@@ -9,6 +9,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -16,12 +17,13 @@ fun LingoLensCard(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(20.dp),
     containerColor: Color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+    elevation: Dp = 2.dp,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
         modifier = modifier,
         shape = androidx.compose.material3.MaterialTheme.shapes.large,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation),
         border = null,
         colors = CardDefaults.cardColors(containerColor = containerColor),
     ) {

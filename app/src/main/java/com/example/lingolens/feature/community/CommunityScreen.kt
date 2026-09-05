@@ -1,6 +1,10 @@
 package com.example.lingolens.feature.community
 
+import com.example.lingolens.ui.components.UserAvatar
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,7 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.lingolens.ui.components.LingoLensCard
-import com.example.lingolens.ui.components.SectionHeader
+
 import com.example.lingolens.ui.theme.LingoLensTheme
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
@@ -63,49 +67,61 @@ fun CommunityScreen(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            Text("Leaderboard", style = MaterialTheme.typography.headlineMedium)
+            Text("Leaderboard", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
         item {
-            SectionHeader(
-                title = "This Week",
-                action = {
-                    Icon(
-                        Icons.Outlined.EmojiEvents,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.tertiary,
-                    )
-                },
-            )
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                tonalElevation = 0.dp,
+                shadowElevation = 0.dp,
+            ) {
+                Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(Icons.Outlined.EmojiEvents, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                    Text("This Week", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+            }
         }
         item {
-            LingoLensCard(contentPadding = PaddingValues(vertical = 4.dp)) {
-                when {
-                    state.isLeaderboardLoading -> Box(
-                        modifier = Modifier.fillMaxWidth().padding(24.dp),
-                        contentAlignment = Alignment.Center,
-                    ) { CircularProgressIndicator() }
-                    state.leaderboardError != null -> Text(
-                        text = state.leaderboardError,
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    state.leaderboard.isEmpty() -> Text(
-                        text = "No learners have joined the leaderboard yet.",
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    else -> state.leaderboard.forEachIndexed { index, entry ->
-                        LeaderboardRow(entry)
-                        if (index != state.leaderboard.lastIndex) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                color = MaterialTheme.colorScheme.outlineVariant,
-                            )
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                tonalElevation = 0.dp,
+                shadowElevation = 0.dp,
+            ) {
+                Column(Modifier.padding(4.dp)) {
+                    when {
+                        state.isLeaderboardLoading -> Box(
+                            modifier = Modifier.fillMaxWidth().padding(24.dp),
+                            contentAlignment = Alignment.Center,
+                        ) { CircularProgressIndicator() }
+                        state.leaderboardError != null -> Text(
+                            text = state.leaderboardError,
+                            modifier = Modifier.padding(16.dp),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        state.leaderboard.isEmpty() -> Text(
+                            text = "No learners have joined the leaderboard yet.",
+                            modifier = Modifier.padding(16.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        else -> state.leaderboard.forEachIndexed { index, entry ->
+                            LeaderboardRow(entry)
+                            if (index != state.leaderboard.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(start = 76.dp, end = 12.dp),
+                                    color = lerp(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outlineVariant, 0.6f),
+                                )
+                            }
                         }
                     }
                 }
@@ -382,45 +398,54 @@ private fun MapLearnerPin(
 
 @Composable
 private fun LeaderboardRow(entry: LeaderboardEntry) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(
-                if (entry.isCurrentUser) {
-                    Modifier.clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.primaryContainer)
-                } else {
-                    Modifier
-                },
-            )
-            .padding(horizontal = 14.dp, vertical = 11.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    val colors = MaterialTheme.colorScheme
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = when {
+            entry.rank == 1 -> colors.primaryContainer
+            entry.isCurrentUser -> lerp(colors.surface, colors.primaryContainer, 0.45f)
+            else -> colors.surface
+        },
+        border = if (entry.isCurrentUser) BorderStroke(1.dp, colors.outlineVariant) else null,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
     ) {
-        Text(
-            entry.rank.toString(),
-            modifier = Modifier.size(28.dp).padding(top = 4.dp),
-            style = MaterialTheme.typography.labelLarge,
-            color = if (entry.rank <= 3) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
-            Box(modifier = Modifier.size(38.dp), contentAlignment = Alignment.Center) {
-                Text(entry.name.take(1), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Surface(
+                modifier = Modifier.size(28.dp),
+                shape = CircleShape,
+                color = if (entry.rank in 1..3) lerp(colors.surface, colors.primaryContainer, 0.7f) else colors.surface,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(entry.rank.toString(), style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (entry.rank in 1..3) FontWeight.Bold else FontWeight.Medium,
+                        color = if (entry.rank in 1..3) colors.primary else colors.onSurfaceVariant)
+                }
+            }
+            UserAvatar(entry.avatarId, size = 34.dp)
+            Column(Modifier.weight(1f)) {
+                Text(entry.name, style = MaterialTheme.typography.titleSmall,
+                    fontWeight = if (entry.rank == 1 || entry.isCurrentUser) FontWeight.Bold else FontWeight.SemiBold,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+                if (entry.isCurrentUser) {
+                    Text("(You)", style = MaterialTheme.typography.labelSmall, color = colors.primary)
+                }
+                Text("Lv. ${entry.level} · ${entry.streakDays} day streak",
+                    style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(entry.xp.toString(), style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold, color = colors.primary)
+                Text("XP", style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
             }
         }
-        Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
-            Text(
-                if (entry.isCurrentUser) "${entry.name} (You)" else entry.name,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                "Lv. ${entry.level}  |  ${entry.streakDays} day streak",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Text("${entry.xp} XP", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 private fun CommunityScreenPreview() {

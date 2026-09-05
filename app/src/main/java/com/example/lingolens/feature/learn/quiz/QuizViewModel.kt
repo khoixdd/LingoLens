@@ -33,7 +33,6 @@ class QuizViewModel @Inject constructor(
 
     private fun loadQuizQuestions() {
         viewModelScope.launch {
-            repository.seedSampleDataIfEmpty()
             val allWords = repository.getAllVocabulary().first()
             if (allWords.isEmpty()) {
                 _uiState.update { it.copy(isLoading = false, isEmpty = true) }

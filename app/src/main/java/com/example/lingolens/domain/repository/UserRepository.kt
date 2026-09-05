@@ -11,6 +11,7 @@ interface UserRepository {
     fun observeLeaderboard(): Flow<LeaderboardLoadState>
     fun observeNearbyLearners(): Flow<List<UserProfile>>
     suspend fun getUserProfile(uid: String): UserProfile?
+    suspend fun updatePersonalization(uid: String, displayName: String, avatarId: String)
     /** Starts a Firestore profile sync without blocking the caller. */
     fun syncUserProfileOnLogin(user: AuthUser)
     suspend fun addXp(uid: String, xpAmount: Int)

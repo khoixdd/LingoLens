@@ -36,7 +36,6 @@ class ReviewViewModel @Inject constructor(
 
     private fun loadReviewQueue() {
         viewModelScope.launch {
-            repository.seedSampleDataIfEmpty()
             allVocabularyList = repository.getAllVocabulary().first()
             val now = System.currentTimeMillis()
 

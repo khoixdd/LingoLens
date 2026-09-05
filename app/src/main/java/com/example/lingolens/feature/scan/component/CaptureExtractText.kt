@@ -1,7 +1,6 @@
 package com.example.lingolens.feature.scan.component
 
 import android.content.Context
-import android.annotation.SuppressLint
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -12,7 +11,6 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.google.mlkit.nl.languageid.LanguageIdentification
 
-@SuppressLint("UnsafeOptInUsageError")
 fun captureAndExtractText(
     imageCapture: ImageCapture,
     context: Context,
@@ -26,7 +24,7 @@ fun captureAndExtractText(
     imageCapture.takePicture(
         executor,
         object : ImageCapture.OnImageCapturedCallback() {
-            @OptIn(ExperimentalGetImage::class)
+            @androidx.annotation.OptIn(ExperimentalGetImage::class)
             override fun onCaptureSuccess(imageProxy: ImageProxy) {
                 val mediaImage = imageProxy.image
                 if (mediaImage != null) {

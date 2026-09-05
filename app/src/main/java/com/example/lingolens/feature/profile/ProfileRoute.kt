@@ -9,6 +9,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @Composable
 fun ProfileRoute(
     onOpenMyWords: () -> Unit,
+    onEditProfile: () -> Unit,
     onOpenNotifications: () -> Unit,
     onOpenAchievements: () -> Unit,
     onOpenStatistics: () -> Unit,
@@ -29,6 +30,7 @@ fun ProfileRoute(
         state = state,
         onAction = { action ->
             when (action) {
+                ProfileAction.EditProfile -> onEditProfile()
                 ProfileAction.OpenMyWords -> onOpenMyWords()
                 ProfileAction.OpenNotifications -> onOpenNotifications()
                 ProfileAction.OpenPrivacy -> onOpenPrivacy()
